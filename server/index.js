@@ -2,6 +2,9 @@
 const { 
   client,
   createTables,
+  createUser,
+  createCategory,
+  
  } = require('./db');
 
 

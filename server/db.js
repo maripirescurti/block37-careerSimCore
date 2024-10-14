@@ -5,23 +5,49 @@ const client = new pg.Client(process.env.DATABASE_URL || 'postgres://localhost/y
 // methods
 const createTables = async() => {
   const SQL = `
-    DROP TABLE IF EXISTS favorites;
+    DROP TABLE IF EXISTS comments;
+    DROP TABLE IF EXISTS reviews;
+    DROP TABLE IF EXISTS favorite-providers;
+    DROP TABLE IF EXISTS service-providers;
     DROP TABLE IF EXISTS users;
-    DROP TABLE IF EXISTS services;
+    DROP TABLE IF EXISTS service-categories;
+    CREATE TABLE service-categories(
+      id UUID PRIMARY KEY,
+      category_name VARCHAR(50) NOT NULL UNIQUE
+    );
     CREATE TABLE users(
       id UUID PRIMARY KEY,
-      username VARCHAR(50) UNIQUE NOT NULL,
-      password VARCHAR(50)
+      name VARCHAR(100) NOT NULL,
+      email VARCHAR(100) NOT NULL UNIQUE,
+      username VARCHAR(100) NOT NULL UNIQUE,
+      password VARCHAR(100) NOT NULL
     );
-    CREATE TABLE services(
+    CREATE TABLE service-providers(
       id UUID PRIMARY KEY,
-      name VARCHAR (100) UNIQUE NOT NULL
+      provider_name VARCHAR(100) NOT NULL,
+      category_id UUID REFERENCES service-categories(id) NOT NULL,
+      description TEXT
     );
-    CREATE TABLE favorites(
+    CREATE TABLE favorite-providers(
       id UUID PRIMARY KEY,
-      service_id UUID REFERENCES services(id) NOT NULL,
       user_id UUID REFERENCES users(id) NOT NULL,
-      CONSTRAINT unique_favorite UNIQUE (service_id, user_id)
+      provider_id UUID REFERENCES service_provider(id) NOT NULL,
+      CONSTRAINT unique_favorite UNIQUE (user_id, provider_id)
+    );
+    CREATE TABLE reviews(
+      id UUID PRIMARY KEY,
+      user_id UUID REFERENCES users(id) NOT NULL,
+      provider_id UUID REFERENCES service_provider(id) NOT NULL,
+      rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+      review_text TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+    CREATE TABLE comments(
+      id UUID PRIMARY KEY,
+      review_id UUID REFERENCES reviews(id) NOT NULL,
+      user_id UUID REFERENCES users(id) NOT NULL,
+      comment_text TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW()
     );
   `;
   await client.query(SQL);
