@@ -4,6 +4,8 @@ const {
   createTables,
  } = require('./db');
 
+
+// init function
 const init = async()=> {
   await client.connect();
   console.log('connected to database');
