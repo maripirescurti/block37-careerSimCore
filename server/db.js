@@ -23,7 +23,7 @@ const createTables = async() => {
       email VARCHAR(100) NOT NULL UNIQUE,
       password VARCHAR(100) NOT NULL
     );
-        CREATE TABLE service-categories(
+    CREATE TABLE service-categories(
       id UUID PRIMARY KEY,
       category_name VARCHAR(50) NOT NULL UNIQUE
     );
@@ -103,6 +103,16 @@ const createPetType = async({ type_name }) => {
   return response.rows[0];
 };
 
+const createProvider = async({ type_name }) => {
+  const SQL = `
+    INSERT INTO pet-types(id, type_name)
+    VALUES($1, $2)
+    RETURNING *
+  `;
+  const response = await client.query(SQL, [uuid.v4(), type_name]);
+  return response.rows[0];
+};
+
 const fetchUsers = async() => {
   const SQL = `
     SELECT * FROM users;
@@ -134,7 +144,13 @@ module.exports = {
   createUser,
   createCategory,
   createPetType,
+  createProvider,
+  createPet,
+  createFavorite,
   fetchUsers,
   fetchCategories,
   fetchPetTypes,
+  fetchProvider,
+  fetchPet,
+  fetchFavorite,
 };
