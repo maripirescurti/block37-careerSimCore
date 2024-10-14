@@ -4,7 +4,7 @@ const {
   createTables,
   createUser,
   createCategory,
-  
+  createProvider,
  } = require('./db');
 
 
