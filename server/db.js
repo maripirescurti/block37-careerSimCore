@@ -1,6 +1,7 @@
 // imports
 const pg = require('pg');
 const client = new pg.Client(process.env.DATABASE_URL || 'postgres://localhost/ydimb_services_db');
+const uuid = require('uuid');
 
 // methods
 const createTables = async() => {
@@ -27,7 +28,7 @@ const createTables = async() => {
     );
     CREATE TABLE pet-types(
       id UUID PRIMARY KEY,
-      type-name VARCHAR(50) NOT NULL UNIQUE
+      type_name VARCHAR(50) NOT NULL UNIQUE
     );
     CREATE TABLE pets(
       id UUID PRIMARY KEY,
@@ -71,8 +72,41 @@ const createTables = async() => {
   await client.query(SQL);
 };
 
+const createUser = async({first_name, last_name, username, email, password}) => {
+  const SQL = `
+    INSERT INTO users(id, first_name, last_name, username, email, password)
+    VALUES($1, $2, $3, $4, $5, $6)
+    RETURNING *
+  `;
+  const response = await client.query(SQL, [uuid.v4(), first_name, last_name, username, email, password]);
+  return response.rows[0];
+};
+
+const createCategory = async({ category_name }) => {
+  const SQL = `
+    INSERT INTO service-categories(id, category_name)
+    VALUES($1, $2)
+    RETURNING *
+  `;
+  const response = await client.query(SQL, [uuid.v4(), category_name]);
+  return response.rows[0];
+};
+
+const createPetType = async({ type_name }) => {
+  const SQL = `
+    INSERT INTO pet-types(id, type_name)
+    VALUES($1, $2)
+    RETURNING *
+  `;
+  const response = await client.query(SQL, [uuid.v4(), type_name]);
+  return response.rows[0];
+};
+
 // exports
 module.exports = {
   client,
   createTables,
+  createUser,
+  createCategory,
+  createPetType,
 };
