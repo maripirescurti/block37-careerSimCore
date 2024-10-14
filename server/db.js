@@ -2,6 +2,7 @@
 const pg = require('pg');
 const client = new pg.Client(process.env.DATABASE_URL || 'postgres://localhost/ydimb_services_db');
 const uuid = require('uuid');
+const bcrypt = require('bcrypt');
 
 // methods
 const createTables = async() => {
@@ -78,7 +79,7 @@ const createUser = async({first_name, last_name, username, email, password}) => 
     VALUES($1, $2, $3, $4, $5, $6)
     RETURNING *
   `;
-  const response = await client.query(SQL, [uuid.v4(), first_name, last_name, username, email, password]);
+  const response = await client.query(SQL, [uuid.v4(), first_name, last_name, username, email, await bcrypt.hash(password, 5)]);
   return response.rows[0];
 };
 
