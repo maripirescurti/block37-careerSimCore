@@ -102,6 +102,30 @@ const createPetType = async({ type_name }) => {
   return response.rows[0];
 };
 
+const fetchUsers = async() => {
+  const SQL = `
+    SELECT * FROM users;
+  `;
+  const response = await client.query(SQL);
+  return response.rows;
+}
+
+const fetchCategories = async() => {
+  const SQL = `
+    SELECT * FROM service-categories;
+  `;
+  const response = await client.query(SQL);
+  return response.rows;
+}
+
+const fetchPetTypes = async() => {
+  const SQL = `
+    SELECT * FROM pet-types;
+  `;
+  const response = await client.query(SQL);
+  return response.rows;
+}
+
 // exports
 module.exports = {
   client,
@@ -109,4 +133,7 @@ module.exports = {
   createUser,
   createCategory,
   createPetType,
+  fetchUsers,
+  fetchCategories,
+  fetchPetTypes,
 };

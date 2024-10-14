@@ -4,7 +4,10 @@ const {
   createTables,
   createUser,
   createCategory,
-  createProvider,
+  createPetType,
+  fetchUsers,
+  fetchCategories,
+  fetchPetTypes,
  } = require('./db');
 
 
@@ -32,7 +35,16 @@ const init = async()=> {
     createPetType({ type_name: 'rabbit'}),
     createPetType({ type_name: 'hamster'}),
     createPetType({ type_name: 'lizard'}),
-  ])
-}
+  ]);
+
+  const users = await fetchUsers();
+  console.log(users);
+
+  const categories = await fetchCategories();
+  console.log(categories);
+
+  const petTypes = await fetchPetTypes();
+  console.log(petTypes);
+};
 
 init();
