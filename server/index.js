@@ -16,6 +16,8 @@ const {
   fetchFavorites,
   destroyFavorite,
  } = require('./db');
+ const express = require('express');
+ const app = express();
 
 
 // init function
@@ -158,6 +160,9 @@ const init = async()=> {
   console.log(await fetchFavorites(mari.id));
   console.log(await destroyFavorite(favorites[0].id));
   console.log(await fetchFavorites(mari.id));
+
+  const port = process.env.PORT || 3000;
+  app.listen(port, () => console.log('listening on port ${port}'));
 };
 
 init();
