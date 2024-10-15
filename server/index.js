@@ -19,6 +19,56 @@ const {
  const express = require('express');
  const app = express();
 
+// APP ROUTES
+// GET ROUTE
+app.get('/api/users', async(req, res, next) => {
+  try {
+    res.send(await fetchUsers());
+  } catch(ex) {
+    next(ex);
+  }
+});
+
+app.get('/api/service-categories', async(req, res, next) => {
+  try {
+    res.send(await fetchCategories());
+  } catch(ex) {
+    next(ex);
+  }
+});
+
+app.get('/api/pet-types', async(req, res, next) => {
+  try {
+    res.send(await fetchPetTypes());
+  } catch(ex) {
+    next(ex);
+  }
+});
+
+app.get('/api/service-providers', async(req, res, next) => {
+  try {
+    res.send(await fetchProviders());
+  } catch(ex) {
+    next(ex);
+  }
+});
+
+app.get('/api/:id/pets', async(req, res, next) => {
+  try {
+    res.send(await fetchPets(req.params.id));
+  } catch(ex) {
+    next(ex);
+  }
+});
+
+app.get('/api/:id/favorites', async(req, res, next) => {
+  try {
+    res.send(await fetchFavorites(req.params.id));
+  } catch(ex) {
+    next(ex);
+  }
+});
+
 
 // init function
 const init = async()=> {
@@ -160,6 +210,9 @@ const init = async()=> {
   console.log(await fetchFavorites(mari.id));
   console.log(await destroyFavorite(favorites[0].id));
   console.log(await fetchFavorites(mari.id));
+
+  console.log(`CURL localhost:3000/api/users/${mari.id}/pets`);
+  console.log(`CURL localhost:3000/api/users/${mari.id}/favorites`);
 
   const port = process.env.PORT || 3000;
   app.listen(port, () => console.log('listening on port ${port}'));
