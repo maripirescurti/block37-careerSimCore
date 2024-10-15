@@ -214,6 +214,13 @@ const destroyFavorite = async(id, user_id) => {
   await client.query(SQL, [id, user_id]);
 }
 
+const findUserByToken = async(token) => {
+  let id;
+  try {
+
+  }
+}
+
 // exports
 module.exports = {
   client,
@@ -232,4 +239,5 @@ module.exports = {
   fetchFavorites,
   destroyFavorite,
   authenticate,
+  findUserByToken
 };

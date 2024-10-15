@@ -15,6 +15,8 @@ const {
   fetchPets,
   fetchFavorites,
   destroyFavorite,
+  authenticate,
+  findUserByToken
  } = require('./db');
  const express = require('express');
  const app = express();
