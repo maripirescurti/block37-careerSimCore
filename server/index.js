@@ -14,6 +14,7 @@ const {
   fetchProviders,
   fetchPets,
   fetchFavorites,
+  destroyFavorite,
  } = require('./db');
 
 
@@ -154,7 +155,9 @@ const init = async()=> {
   console.log(await fetchPets());
 
   console.log(await fetchFavorites());
-
+  console.log(await fetchFavorites(mari.id));
+  console.log(await destroyFavorite(favorites[0].id));
+  console.log(await fetchFavorites(mari.id));
 };
 
 init();
