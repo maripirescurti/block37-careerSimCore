@@ -11,12 +11,12 @@ const createTables = async() => {
   const SQL = `
     DROP TABLE IF EXISTS comments;
     DROP TABLE IF EXISTS reviews;
-    DROP TABLE IF EXISTS favorite-providers;
+    DROP TABLE IF EXISTS favorites;
     DROP TABLE IF EXISTS pets;
-    DROP TABLE IF EXISTS service-providers;
+    DROP TABLE IF EXISTS service_providers;
     DROP TABLE IF EXISTS users;
-    DROP TABLE IF EXISTS service-categories;
-    DROP TABLE IF EXISTS pet-types;
+    DROP TABLE IF EXISTS service_categories;
+    DROP TABLE IF EXISTS pet_types;
     CREATE TABLE users(
       id UUID PRIMARY KEY,
       first_name VARCHAR(100) NOT NULL,
@@ -25,31 +25,31 @@ const createTables = async() => {
       email VARCHAR(100) NOT NULL UNIQUE,
       password VARCHAR(100) NOT NULL
     );
-    CREATE TABLE service-categories(
+    CREATE TABLE service_categories(
       id UUID PRIMARY KEY,
       category_name VARCHAR(50) NOT NULL UNIQUE
     );
-    CREATE TABLE pet-types(
+    CREATE TABLE pet_types(
       id UUID PRIMARY KEY,
       type_name VARCHAR(50) NOT NULL UNIQUE
+    );
+    CREATE TABLE service_providers(
+      id UUID PRIMARY KEY,
+      provider_name VARCHAR(100) NOT NULL,
+      category_id UUID REFERENCES service_categories(id) NOT NULL,
+      pet_type_id UUID REFERENCES pet_types(id) NOT NULL,
+      description TEXT
     );
     CREATE TABLE pets(
       id UUID PRIMARY KEY,
       user_id UUID REFERENCES users(id) NOT NULL,
       pet_name VARCHAR(100) NOT NULL,
-      pet_type_id UUID REFERENCES pet-types(id) NOT NULL,
+      pet_type_id UUID REFERENCES pet_types(id) NOT NULL,
       breed VARCHAR(100),
       age INTEGER,
-      weight INTEGER,
+      weight INTEGER
     );
-    CREATE TABLE service-providers(
-      id UUID PRIMARY KEY,
-      provider_name VARCHAR(100) NOT NULL,
-      category_id UUID REFERENCES service-categories(id) NOT NULL,
-      pet_type_id UUID REFERENCES pet-types(id) NOT NULL,
-      description TEXT
-    );
-    CREATE TABLE favorite-providers(
+    CREATE TABLE favorites(
       id UUID PRIMARY KEY,
       user_id UUID REFERENCES users(id) NOT NULL,
       provider_id UUID REFERENCES service_providers(id) NOT NULL,
@@ -58,7 +58,7 @@ const createTables = async() => {
     CREATE TABLE reviews(
       id UUID PRIMARY KEY,
       user_id UUID REFERENCES users(id) NOT NULL,
-      provider_id UUID REFERENCES service_provider(sid) NOT NULL,
+      provider_id UUID REFERENCES service_providers(id) NOT NULL,
       rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
       review_text TEXT,
       created_at TIMESTAMP DEFAULT NOW()
@@ -86,7 +86,7 @@ const createUser = async({first_name, last_name, username, email, password}) => 
 
 const createCategory = async({ category_name }) => {
   const SQL = `
-    INSERT INTO service-categories(id, category_name)
+    INSERT INTO service_categories(id, category_name)
     VALUES($1, $2)
     RETURNING *
   `;
@@ -96,7 +96,7 @@ const createCategory = async({ category_name }) => {
 
 const createPetType = async({ type_name }) => {
   const SQL = `
-    INSERT INTO pet-types(id, type_name)
+    INSERT INTO pet_types(id, type_name)
     VALUES($1, $2)
     RETURNING *
   `;
@@ -122,7 +122,7 @@ const authenticate = async({ username, password}) => {
 
 const createProvider = async({ provider_name, category_id, pet_type_id }) => {
   const SQL = `
-    INSERT INTO service-providers(id, provider_name, category_id, pet_type_id)
+    INSERT INTO service_providers(id, provider_name, category_id, pet_type_id)
     VALUES($1, $2, $3, $4)
     RETURNING *
   `;
@@ -142,7 +142,7 @@ const createPet = async({ user_id, pet_name, pet_type_id, breed, age, weight }) 
 
 const createFavorite = async({ user_id, provider_id }) => {
   const SQL = `
-    INSERT INTO favorite-providers(id, user_id, provider_id)
+    INSERT INTO favorites(id, user_id, provider_id)
     VALUES($1, $2, $3)
     RETURNING *
   `;
@@ -184,7 +184,7 @@ const fetchUsers = async() => {
 const fetchCategories = async() => {
   const SQL = `
     SELECT * 
-    FROM service-categories
+    FROM service_categories
   `;
   const response = await client.query(SQL);
   return response.rows;
@@ -193,7 +193,7 @@ const fetchCategories = async() => {
 const fetchPetTypes = async() => {
   const SQL = `
     SELECT * 
-    FROM pet-types
+    FROM pet_types
   `;
   const response = await client.query(SQL);
   return response.rows;
@@ -202,7 +202,7 @@ const fetchPetTypes = async() => {
 const fetchProviders = async() => {
   const SQL = `
     SELECT * 
-    FROM service-providers
+    FROM service_providers
   `;
   const response = await client.query(SQL);
   return response.rows;
