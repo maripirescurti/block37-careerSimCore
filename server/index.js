@@ -43,14 +43,11 @@ const init = async()=> {
     createPetType({ type_name: 'Lizard'})
   ]);
 
-  const users = await fetchUsers();
-  console.log(users);
+  console.log(await fetchUsers());
 
-  const categories = await fetchCategories();
-  console.log(categories);
+  console.log(await fetchCategories());
 
-  const petTypes = await fetchPetTypes();
-  console.log(petTypes);
+  console.log(await fetchPetTypes());
 
   const [scoobyDoo, purrfectGroomers, bugsBunnySitters, hamtaroFreud, wwwv] = await Promise.all([
     createProvider({ 
@@ -151,6 +148,12 @@ const init = async()=> {
     createFavorite({ user_id: luis.id, provider_id: scoobyDoo.id }),
     createFavorite({ user_id: gui.id, provider_id: wwwv.id }),
   ])
+
+  console.log(await fetchProviders());
+
+  console.log(await fetchPets());
+
+  console.log(await fetchFavorites());
 
 };
 
