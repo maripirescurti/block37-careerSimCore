@@ -53,7 +53,7 @@ app.get('/api/service-providers', async(req, res, next) => {
   }
 });
 
-app.get('/api/:id/pets', async(req, res, next) => {
+app.get('/api/users/:id/pets', async(req, res, next) => {
   try {
     res.send(await fetchPets(req.params.id));
   } catch(ex) {
@@ -61,9 +61,34 @@ app.get('/api/:id/pets', async(req, res, next) => {
   }
 });
 
-app.get('/api/:id/favorites', async(req, res, next) => {
+app.get('/api/users/:id/favorites', async(req, res, next) => {
   try {
     res.send(await fetchFavorites(req.params.id));
+  } catch(ex) {
+    next(ex);
+  }
+});
+
+// CREATE
+app.post('/api/users/providera', async(req, res, next) => {
+  try {
+    res.status(201).send(await createProvider({category_id: req.params.category_id, pet_type_id: req.body.pet_type_id}));
+  } catch(ex) {
+    next(ex);
+  }
+});
+
+app.post('/api/users/:id/pets', async(req, res, next) => {
+  try {
+    res.status(201).send(await createPet({user_id: req.params.id, pet_type_id: req.body.pet_type_id}));
+  } catch(ex) {
+    next(ex);
+  }
+});
+
+app.post('/api/users/:id/favorites', async(req, res, next) => {
+  try {
+    res.status(201).send(await createFavorite({user_id: req.params.id, provider_id: req.body.provider_id}));
   } catch(ex) {
     next(ex);
   }
