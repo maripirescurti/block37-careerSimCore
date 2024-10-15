@@ -275,7 +275,7 @@ const init = async()=> {
       pet_type_id: rabbit.id
     }),
     createProvider({ 
-      provider_name: 'Hamtaro vs Freud', 
+      provider_name: 'Hamtaro Freud', 
       description: 'A place for hamster mental health',
       category_id: therapist.id, 
       pet_type_id: hamster.id
