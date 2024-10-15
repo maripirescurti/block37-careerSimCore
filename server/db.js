@@ -3,6 +3,8 @@ const pg = require('pg');
 const client = new pg.Client(process.env.DATABASE_URL || 'postgres://localhost/ydimb_services_db');
 const uuid = require('uuid');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const JWT = process.env.JWT || 'shh2!';
 
 // methods
 const createTables = async() => {
@@ -229,4 +231,5 @@ module.exports = {
   fetchPets,
   fetchFavorites,
   destroyFavorite,
+  authenticate,
 };
