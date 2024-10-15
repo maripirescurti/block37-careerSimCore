@@ -8,18 +8,23 @@ const {
   createProvider,
   createPet,
   createFavorite,
+  createReview,
+  createComment,
   fetchUsers,
   fetchCategories,
   fetchPetTypes,
   fetchProviders,
   fetchPets,
   fetchFavorites,
+  fetchReviews,
+  fetchComments,
   destroyFavorite,
   authenticate,
-  findUserByToken
+  findUserByToken,
  } = require('./db');
  const express = require('express');
  const app = express();
+ app.use(express.json());
 
  // middleware to ensure logged user
  const isLoggedIn = async(req, res, next) => {
@@ -108,9 +113,13 @@ app.get('/api/users/:id/favorites', isLoggedIn, async(req, res, next) => {
 });
 
 // CREATE
-app.post('/api/users/providera', async(req, res, next) => {
+app.post('/api/users/service-providera', async(req, res, next) => {
   try {
-    res.status(201).send(await createProvider({category_id: req.params.category_id, pet_type_id: req.body.pet_type_id}));
+    res.status(201).send(await createProvider({
+      provider_name: req.body.provider_name,
+      category_id: req.body.category_id, 
+      pet_type_id: req.body.pet_type_id
+    }));
   } catch(ex) {
     next(ex);
   }
@@ -123,7 +132,16 @@ app.post('/api/users/:id/pets', isLoggedIn, async(req, res, next) => {
       error.status = 401;
       throw error;
     }
-    res.status(201).send(await createPet({user_id: req.params.id, pet_type_id: req.body.pet_type_id}));
+    const pet_last_name = req.user.last_name;
+    res.status(201).send(await createPet({
+      user_id: req.params.id, 
+      pet_name: req.body.pet_name,
+      pet_type_id: req.body.pet_type_id,
+      breed: req.body.breed,
+      age: req.body.age,
+      weight: req.body.weight,
+      pet_last_name,
+    }));
   } catch(ex) {
     next(ex);
   }
@@ -142,6 +160,44 @@ app.post('/api/users/:id/favorites', isLoggedIn, async(req, res, next) => {
   }
 });
 
+app.post('/api/users/:userId/providers/:providerId/reviews', isLoggedIn, async(req, res, next) => {
+  try {
+    if (req.params.userId !== req.user.id) {
+      const error = Error('not authorized');
+      error.status = 401;
+      throw error;
+    }
+    const review = await createReview({
+      user_id: req.params.userId,
+      provider_id: req.params.providerId,
+      rating: req.body.rating,
+      review_text: req.body.review_text,
+    });
+    res.status(201).send(review);
+  } catch (ex) {
+    next(ex);
+  }
+});
+
+app.post('/api/reviews/:reviewId/comments', isLoggedIn, async(req, res, next) => {
+  try {
+    if (req.params.userId !== req.user.id) {
+      const error = Error('not authorized');
+      error.status = 401;
+      throw error;
+    }
+    const comment = await createComment({
+      review_id: req.params.reviewId,
+      user_id: req.user.id,
+      comment_text: req.body.comment_text,
+    });
+    res.status(201).send(comment);
+  } catch (ex) {
+    next(ex);
+  }
+});
+
+
 // DELETE
 app.delete('/api/users/:userId/favorites/:id', isLoggedIn, async(req, res, next) => {
   try {
@@ -153,6 +209,16 @@ app.delete('/api/users/:userId/favorites/:id', isLoggedIn, async(req, res, next)
     await destroyFavorite({ id: req.params.id, user_id: req.params.userId});
     res.sendStatus(204);
   } catch(ex) {
+    next(ex);
+  }
+});
+
+// GET COMMENTS
+app.get('/api/reviews/:reviewId/comments', async (req, res, next) => {
+  try {
+    const comments = await fetchComments(req.params.reviewId);
+    res.send(comments);
+  } catch (ex) {
     next(ex);
   }
 });
@@ -302,7 +368,7 @@ const init = async()=> {
   console.log(`CURL localhost:3000/api/users/${mari.id}/favorites`);
 
   const port = process.env.PORT || 3000;
-  app.listen(port, () => console.log('listening on port ${port}'));
+  app.listen(port, () => console.log(`listening on port ${port}`));
 };
 
 init();
