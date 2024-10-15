@@ -102,6 +102,22 @@ const createPetType = async({ type_name }) => {
   return response.rows[0];
 };
 
+const authenticate = async({ username, password}) => {
+  const SQL = `
+    SELECT id, password
+    FROM users
+    WHERE username = $1
+  `;
+  const response = await client.query(SQL, [username]);
+  if(!response.rows.length || (await bcrypt.compare(password, response.rows[0].password))=== false){
+    const error = Error('not authorized');
+    error.status = 401;
+    throw error;
+  }
+  const token = await jwt.sign({ id: response.rowa[0].id, JWT});
+  return {token};
+}
+
 const createProvider = async({ provider_name, category_id, pet_type_id }) => {
   const SQL = `
     INSERT INTO service-providers(id, provider_name, category_id, pet_type_id)
