@@ -150,6 +150,28 @@ const createFavorite = async({ user_id, provider_id }) => {
   return response.rows[0];
 };
 
+const createReview = async({ user_id, provider_id, rating, review_text }) => {
+  const SQL = `
+    INSERT INTO reviews (id, user_id, provider_id, rating, review_text)
+    VALUES ($1, $2, $3, $4, $5)
+    RETURNING *;
+  `;
+  const values = [uuid.v4(), user_id, provider_id, rating, review_text];
+  const { rows } = await client.query(SQL, values);
+  return rows[0];
+};
+
+const createComment = async({ review_id, user_id, comment_text }) => {
+  const SQL = `
+    INSERT INTO comments (id, review_id, user_id, comment_text)
+    VALUES ($1, $2, $3, $4)
+    RETURNING *;
+  `;
+  const values = [uuid.v4(), review_id, user_id, comment_text];
+  const { rows } = await client.query(SQL, values);
+  return rows[0];
+};
+
 const fetchUsers = async() => {
   const SQL = `
     SELECT * 
@@ -206,6 +228,27 @@ const fetchFavorites = async(user_id) => {
   return response.rows;
 }
 
+const fetchReviews = async (providerId) => {
+  const SQL = `
+    SELECT *
+    FROM reviews
+    WHERE provider_id = $1;
+  `;
+  const { rows } = await client.query(SQL, [providerId]);
+  return rows;
+};
+
+const fetchComments = async (reviewId) => {
+  const SQL = `
+    SELECT *
+    FROM comments
+    WHERE review_id = $1;
+  `;
+  const { rows } = await client.query(SQL, [reviewId]);
+  return rows;
+};
+
+
 const destroyFavorite = async(id, user_id) => {
   const SQL = `
     DELETE FROM favorites
@@ -248,12 +291,16 @@ module.exports = {
   createProvider,
   createPet,
   createFavorite,
+  createReview,
+  createComment,
   fetchUsers,
   fetchCategories,
   fetchPetTypes,
   fetchProviders,
   fetchPets,
   fetchFavorites,
+  fetchReviews,
+  fetchComments,
   destroyFavorite,
   authenticate,
   findUserByToken
