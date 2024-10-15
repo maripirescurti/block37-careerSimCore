@@ -113,7 +113,7 @@ app.get('/api/users/:id/favorites', isLoggedIn, async(req, res, next) => {
 });
 
 // CREATE
-app.post('/api/users/service-providera', async(req, res, next) => {
+app.post('/api/users/service-providers', async(req, res, next) => {
   try {
     res.status(201).send(await createProvider({
       provider_name: req.body.provider_name,
@@ -354,6 +354,45 @@ const init = async()=> {
     createFavorite({ user_id: luis.id, provider_id: scoobyDoo.id }),
     createFavorite({ user_id: gui.id, provider_id: wwwv.id }),
   ])
+
+  const reviews = await Promise.all([
+    createReview({
+      user_id: mari.id,
+      provider_id: scoobyDoo.id,
+      rating: 5,
+      review_text: 'Amazing service! My dog loves the night walks!'
+    }),
+    createReview({
+      user_id: ozan.id,
+      provider_id: purrfectGroomers.id,
+      rating: 4,
+      review_text: 'Great grooming, but a bit pricey'
+    }),
+    createReview({
+      user_id: luis.id,
+      provider_id: bugsBunnySitters.id,
+      rating: 5,
+      review_text: 'BunBun is always well taken care of!'
+    }),
+  ]);
+
+  const comments = await Promise.all([
+    createComment({
+      review_id: review[0],
+      user_id: ozan.id,
+      comment_text: 'I agree! The best nighttime service.'
+    }),
+    createComment({
+      review_id: review[1],
+      user_id: gui.id,
+      comment_text: 'I found it worth every penny.'
+    }),
+    createComment({
+      review_id: review[2],
+      user_id: celdy.id,
+      comment_text: 'Bunny loves it there!'
+    }),
+  ]);
 
   console.log(await fetchProviders());
 

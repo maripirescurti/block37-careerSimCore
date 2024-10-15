@@ -52,13 +52,13 @@ const createTables = async() => {
     CREATE TABLE favorite-providers(
       id UUID PRIMARY KEY,
       user_id UUID REFERENCES users(id) NOT NULL,
-      provider_id UUID REFERENCES service_provider(id) NOT NULL,
+      provider_id UUID REFERENCES service_providers(id) NOT NULL,
       CONSTRAINT unique_favorite UNIQUE (user_id, provider_id)
     );
     CREATE TABLE reviews(
       id UUID PRIMARY KEY,
       user_id UUID REFERENCES users(id) NOT NULL,
-      provider_id UUID REFERENCES service_provider(id) NOT NULL,
+      provider_id UUID REFERENCES service_provider(sid) NOT NULL,
       rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
       review_text TEXT,
       created_at TIMESTAMP DEFAULT NOW()
@@ -116,7 +116,7 @@ const authenticate = async({ username, password}) => {
     error.status = 401;
     throw error;
   }
-  const token = await jwt.sign({ id: response.rowa[0].id, JWT});
+  const token = await jwt.sign({ id: response.rows[0].id, JWT});
   return {token};
 }
 
@@ -136,13 +136,13 @@ const createPet = async({ user_id, pet_name, pet_type_id, breed, age, weight }) 
     VALUES($1, $2, $3, $4, $5, $6, $7)
     RETURNING *
   `;
-  const response = await client.query(SQL, [uuid.v4(), user_id, pet_name, category_id, pet_type_id, breed, age, weight]);
+  const response = await client.query(SQL, [uuid.v4(), user_id, pet_name, pet_type_id, breed, age, weight]);
   return response.rows[0];
 };
 
 const createFavorite = async({ user_id, provider_id }) => {
   const SQL = `
-    INSERT INTO favorites(id, user_id, provider_id)
+    INSERT INTO favorite-providers(id, user_id, provider_id)
     VALUES($1, $2, $3)
     RETURNING *
   `;
