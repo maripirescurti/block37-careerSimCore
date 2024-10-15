@@ -81,16 +81,26 @@ app.get('/api/service-providers', async(req, res, next) => {
   }
 });
 
-app.get('/api/users/:id/pets', async(req, res, next) => {
+app.get('/api/users/:id/pets', isLoggedIn, async(req, res, next) => {
   try {
+    if(req.params.id !== req.user.id){
+      const error = Error('not authorized');
+      error.status = 401;
+      throw error;
+    }
     res.send(await fetchPets(req.params.id));
   } catch(ex) {
     next(ex);
   }
 });
 
-app.get('/api/users/:id/favorites', async(req, res, next) => {
+app.get('/api/users/:id/favorites', isLoggedIn, async(req, res, next) => {
   try {
+    if(req.params.id !== req.user.id){
+      const error = Error('not authorized');
+      error.status = 401;
+      throw error;
+    }
     res.send(await fetchFavorites(req.params.id));
   } catch(ex) {
     next(ex);
@@ -106,16 +116,26 @@ app.post('/api/users/providera', async(req, res, next) => {
   }
 });
 
-app.post('/api/users/:id/pets', async(req, res, next) => {
+app.post('/api/users/:id/pets', isLoggedIn, async(req, res, next) => {
   try {
+    if(req.params.id !== req.user.id){
+      const error = Error('not authorized');
+      error.status = 401;
+      throw error;
+    }
     res.status(201).send(await createPet({user_id: req.params.id, pet_type_id: req.body.pet_type_id}));
   } catch(ex) {
     next(ex);
   }
 });
 
-app.post('/api/users/:id/favorites', async(req, res, next) => {
+app.post('/api/users/:id/favorites', isLoggedIn, async(req, res, next) => {
   try {
+    if(req.params.id !== req.user.id){
+      const error = Error('not authorized');
+      error.status = 401;
+      throw error;
+    }
     res.status(201).send(await createFavorite({user_id: req.params.id, provider_id: req.body.provider_id}));
   } catch(ex) {
     next(ex);
@@ -123,8 +143,13 @@ app.post('/api/users/:id/favorites', async(req, res, next) => {
 });
 
 // DELETE
-app.delete('/api/users/:userId/favorites/:id', async(req, res, next) => {
+app.delete('/api/users/:userId/favorites/:id', isLoggedIn, async(req, res, next) => {
   try {
+    if(req.params.id !== req.user.id){
+      const error = Error('not authorized');
+      error.status = 401;
+      throw error;
+    }
     await destroyFavorite({ id: req.params.id, user_id: req.params.userId});
     res.sendStatus(204);
   } catch(ex) {
