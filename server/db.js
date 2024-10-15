@@ -35,7 +35,6 @@ const createTables = async() => {
       id UUID PRIMARY KEY,
       user_id UUID REFERENCES users(id) NOT NULL,
       pet_name VARCHAR(100) NOT NULL,
-      pet_last_name VARCHAR(100) NOT NULL,
       pet_type_id UUID REFERENCES pet-types(id) NOT NULL,
       breed VARCHAR(100),
       age INTEGER,
@@ -103,19 +102,40 @@ const createPetType = async({ type_name }) => {
   return response.rows[0];
 };
 
-const createProvider = async({ type_name }) => {
+const createProvider = async({ provider_name, category_id, pet_type_id }) => {
   const SQL = `
-    INSERT INTO pet-types(id, type_name)
-    VALUES($1, $2)
+    INSERT INTO service-providers(id, provider_name, category_id, pet_type_id)
+    VALUES($1, $2, $3, $4)
     RETURNING *
   `;
-  const response = await client.query(SQL, [uuid.v4(), type_name]);
+  const response = await client.query(SQL, [uuid.v4(), provider_name, category_id, pet_type_id]);
+  return response.rows[0];
+};
+
+const createPet = async({ user_id, pet_name, pet_type_id, breed, age, weight }) => {
+  const SQL = `
+    INSERT INTO pets(id, user_id, pet_name, pet_type_id, breed, age, weight)
+    VALUES($1, $2, $3, $4, $5, $6, $7)
+    RETURNING *
+  `;
+  const response = await client.query(SQL, [uuid.v4(), user_id, pet_name, category_id, pet_type_id, breed, age, weight]);
+  return response.rows[0];
+};
+
+const createFavorite = async({ user_id, provider_id }) => {
+  const SQL = `
+    INSERT INTO favorites(id, user_id, provider_id)
+    VALUES($1, $2, $3)
+    RETURNING *
+  `;
+  const response = await client.query(SQL, [uuid.v4(), user_id, provider_id]);
   return response.rows[0];
 };
 
 const fetchUsers = async() => {
   const SQL = `
-    SELECT * FROM users;
+    SELECT * 
+    FROM users
   `;
   const response = await client.query(SQL);
   return response.rows;
@@ -123,7 +143,8 @@ const fetchUsers = async() => {
 
 const fetchCategories = async() => {
   const SQL = `
-    SELECT * FROM service-categories;
+    SELECT * 
+    FROM service-categories
   `;
   const response = await client.query(SQL);
   return response.rows;
@@ -131,9 +152,39 @@ const fetchCategories = async() => {
 
 const fetchPetTypes = async() => {
   const SQL = `
-    SELECT * FROM pet-types;
+    SELECT * 
+    FROM pet-types
   `;
   const response = await client.query(SQL);
+  return response.rows;
+}
+
+const fetchProviders = async() => {
+  const SQL = `
+    SELECT * 
+    FROM service-providers
+  `;
+  const response = await client.query(SQL);
+  return response.rows;
+}
+
+const fetchPets = async(user_id) => {
+  const SQL = `
+    SELECT * 
+    FROM pets
+    WHERE user_id = $1
+  `;
+  const response = await client.query(SQL, [user_id]);
+  return response.rows;
+}
+
+const fetchFavorites = async(user_id) => {
+  const SQL = `
+    SELECT * 
+    FROM favorites
+    WHERE user_id = $1
+  `;
+  const response = await client.query(SQL, [user_id]);
   return response.rows;
 }
 
@@ -150,7 +201,7 @@ module.exports = {
   fetchUsers,
   fetchCategories,
   fetchPetTypes,
-  fetchProvider,
-  fetchPet,
-  fetchFavorite,
+  fetchProviders,
+  fetchPets,
+  fetchFavorites,
 };
