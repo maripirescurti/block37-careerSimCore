@@ -94,6 +94,13 @@ app.post('/api/users/:id/favorites', async(req, res, next) => {
   }
 });
 
+// DELETE
+app.delete('/api/users/:userId/favorites/:id', async(req, res, next) => {
+  try {
+    await destroyFavorite({ id: req.params.id, user_id: req.params.userId});
+    res.sendStatus(204);
+  }
+});
 
 // init function
 const init = async()=> {
