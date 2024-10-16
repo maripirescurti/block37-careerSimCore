@@ -4,16 +4,16 @@ const {
   createTables,
   createUser,
   createCategory,
-  createPetType,
-  createProvider,
+  createSpecies,
+  createService,
   createPet,
   createFavorite,
   createReview,
   createComment,
   fetchUsers,
   fetchCategories,
-  fetchPetTypes,
-  fetchProviders,
+  fetchSpecies,
+  fetchServices,
   fetchPets,
   fetchFavorites,
   fetchReviews,
@@ -62,7 +62,7 @@ app.get('/api/users', async(req, res, next) => {
   }
 });
 
-app.get('/api/serviceCategories', async(req, res, next) => {
+app.get('/api/categories', async(req, res, next) => {
   try {
     res.send(await fetchCategories());
   } catch(ex) {
@@ -70,17 +70,17 @@ app.get('/api/serviceCategories', async(req, res, next) => {
   }
 });
 
-app.get('/api/petTypes', async(req, res, next) => {
+app.get('/api/species', async(req, res, next) => {
   try {
-    res.send(await fetchPetTypes());
+    res.send(await fetchSpecies());
   } catch(ex) {
     next(ex);
   }
 });
 
-app.get('/api/serviceProviders', async(req, res, next) => {
+app.get('/api/services', async(req, res, next) => {
   try {
-    res.send(await fetchProviders());
+    res.send(await fetchServices());
   } catch(ex) {
     next(ex);
   }
@@ -113,9 +113,9 @@ app.get('/api/users/:id/favorites', isLoggedIn, async(req, res, next) => {
 });
 
 // CREATE
-app.post('/api/users/serviceProviders', async(req, res, next) => {
+app.post('/api/users/services', async(req, res, next) => {
   try {
-    res.status(201).send(await createProvider({
+    res.status(201).send(await createService({
       provider_name: req.body.provider_name,
       category_id: req.body.category_id, 
       pet_type_id: req.body.pet_type_id
@@ -160,7 +160,7 @@ app.post('/api/users/:id/favorites', isLoggedIn, async(req, res, next) => {
   }
 });
 
-app.post('/api/users/:userId/serviceProviders/:providerId/reviews', isLoggedIn, async(req, res, next) => {
+app.post('/api/users/:userId/services/:serviceId/reviews', isLoggedIn, async(req, res, next) => {
   try {
     if (req.params.userId !== req.user.id) {
       const error = Error('not authorized');
@@ -169,7 +169,7 @@ app.post('/api/users/:userId/serviceProviders/:providerId/reviews', isLoggedIn, 
     }
     const review = await createReview({
       user_id: req.params.userId,
-      provider_id: req.params.providerId,
+      provider_id: req.params.serviceId,
       rating: req.body.rating,
       review_text: req.body.review_text,
     });
@@ -242,45 +242,45 @@ const init = async()=> {
     createCategory({ category_name: 'Vet'}),
     createCategory({ category_name: 'Therapist'}),
 
-    createPetType({ type_name: 'Dog'}),
-    createPetType({ type_name: 'Cat'}),
-    createPetType({ type_name: 'Rabbit'}),
-    createPetType({ type_name: 'Hamster'}),
-    createPetType({ type_name: 'Lizard'})
+    createSpecies({ type_name: 'Dog'}),
+    createSpecies({ type_name: 'Cat'}),
+    createSpecies({ type_name: 'Rabbit'}),
+    createSpecies({ type_name: 'Hamster'}),
+    createSpecies({ type_name: 'Lizard'})
   ]);
 
   console.log(await fetchUsers());
 
   console.log(await fetchCategories());
 
-  console.log(await fetchPetTypes());
+  console.log(await fetchSpecies());
 
   const [scoobyDoo, purrfectGroomers, bugsBunnySitters, hamtaroFreud, wwwv] = await Promise.all([
-    createProvider({ 
+    createService({ 
       provider_name: 'Scooby Doo Night Walkers', 
       description: 'Providing nighttime walks for your dogs',
       category_id: walker.id, 
       pet_type_id: dog.id
     }),
-    createProvider({ 
+    createService({ 
       provider_name: 'Purrfect Groomers', 
       description: 'Grooming services for your kitties',
       category_id: groomer.id, 
       pet_type_id: cat.id
     }),
-    createProvider({ 
+    createService({ 
       provider_name: 'Bugs Bunny Sitters', 
       description: 'The second home for bunnies',
       category_id: petsitter.id, 
       pet_type_id: rabbit.id
     }),
-    createProvider({ 
+    createService({ 
       provider_name: 'Hamtaro Freud', 
       description: 'A place for hamster mental health',
       category_id: therapist.id, 
       pet_type_id: hamster.id
     }),
-    createProvider({ 
+    createService({ 
       provider_name: 'Wild Wild West Vets', 
       description: 'A vet specialized in reptiles and cold-blooded creatures',
       category_id: vet.id, 
@@ -394,7 +394,7 @@ const init = async()=> {
     }),
   ]);
 
-  console.log(await fetchProviders());
+  console.log(await fetchServices());
 
   console.log(await fetchPets());
 
@@ -422,7 +422,7 @@ const init = async()=> {
   console.log(`curl -X GET http://localhost:3000/api/users/<userId>/favorites -H "Authorization: <token>"`);
 
   console.log(`# Create a service provider`);
-  console.log(`curl -X POST http://localhost:3000/api/users/serviceProviders -H "Content-Type: application/json" -d '{"provider_name": "Provider Name", "category_id": 1, "pet_type_id": 1}'`);
+  console.log(`curl -X POST http://localhost:3000/api/users/services -H "Content-Type: application/json" -d '{"provider_name": "Provider Name", "category_id": 1, "pet_type_id": 1}'`);
 
   console.log(`# Create a pet for a user`);
   console.log(`curl -X POST http://localhost:3000/api/users/<userId>/pets -H "Content-Type: application/json" -d '{"pet_name": "Pet Name", "pet_type_id": 1, "breed": "Breed", "age": 2, "weight": 10}'`);
@@ -431,7 +431,7 @@ const init = async()=> {
   console.log(`curl -X POST http://localhost:3000/api/users/<userId>/favorites -H "Content-Type: application/json" -d '{"provider_id": 1}'`);
 
   console.log(`# Create a review for a service provider`);
-  console.log(`curl -X POST http://localhost:3000/api/users/<userId>/serviceProviders/<providerId>/reviews -H "Content-Type: application/json" -d '{"rating": 5, "review_text": "Great service!"}'`);
+  console.log(`curl -X POST http://localhost:3000/api/users/<userId>/services/<serviceId>/reviews -H "Content-Type: application/json" -d '{"rating": 5, "review_text": "Great service!"}'`);
 
   console.log(`# Create a comment for a review`);
   console.log(`curl -X POST http://localhost:3000/api/reviews/<reviewId>/comments -H "Authorization: <token>" -H "Content-Type: application/json" -d '{"comment_text": "I totally agree!"}'`);
@@ -440,13 +440,13 @@ const init = async()=> {
   console.log(`curl -X DELETE http://localhost:3000/api/users/<userId>/favorites/<favoriteId> -H "Authorization: <token>"`);
 
   console.log(`# Get service categories`);
-  console.log(`curl -X GET http://localhost:3000/api/serviceCategories`);
+  console.log(`curl -X GET http://localhost:3000/api/categories`);
 
   console.log(`# Get pet types`);
-  console.log(`curl -X GET http://localhost:3000/api/petTypes`);
+  console.log(`curl -X GET http://localhost:3000/api/species`);
 
   console.log(`# Get service providers`);
-  console.log(`curl -X GET http://localhost:3000/api/serviceProviders`);
+  console.log(`curl -X GET http://localhost:3000/api/services`);
 
   console.log(`# Get comments for a review`);
   console.log(`curl -X GET http://localhost:3000/api/reviews/<reviewId>/comments`);
