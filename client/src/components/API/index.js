@@ -1,5 +1,5 @@
 export const fetchServices = async () => {
-  const response = await fetch('/api/services');
+  const response = await fetch('http://localhost:3000/api/services');
 
   if (response.ok) {
     const json = await response.json();
@@ -12,8 +12,16 @@ export const fetchServices = async () => {
   return response.json();
 };
 
+export const fetchServiceById = async (id) => {
+  const response = await fetch(`http://localhost:3000/api/services/${id}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch book');
+  }
+  return response.json();
+};
+
 export const addFavorite = async (serviceId, token) => {
-  const response = await fetch('/api/favorites', {
+  const response = await fetch('http://localhost:3000/api/favorites', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
