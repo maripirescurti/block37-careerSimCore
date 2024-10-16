@@ -27,6 +27,12 @@ const {
  const app = express();
  app.use(express.json());
 
+ // for deployment 
+ const path = require('path');
+ app.use(express.static(path.join(__dirname, 'build')));
+ app.get('/', async(req, res) => {res.sendFile(path.join(__dirname, 'build', 'index.html'))});
+//  app.use('/assets', express);
+
  // middleware to ensure logged user
  const isLoggedIn = async(req, res, next) => {
   try {
@@ -37,6 +43,7 @@ const {
   }
  };
 
+ // Authentication Routes
  app.post('/api/auth/login', async(req, res, next) => {
   try {
     res.send(await authenticate(req.body));
@@ -55,6 +62,7 @@ const {
 
 // APP ROUTES
 // GET ROUTE
+
 app.get('/api/users', async(req, res, next) => {
   try {
     res.send(await fetchUsers());
@@ -119,7 +127,8 @@ app.post('/api/users/services', async(req, res, next) => {
     res.status(201).send(await createService({
       name: req.body.name,
       category_id: req.body.category_id, 
-      species_id: req.body.species_id
+      species_id: req.body.species_id,
+      image_url: req.body.image_url
     }));
   } catch(ex) {
     next(ex);
@@ -261,31 +270,36 @@ const init = async()=> {
       name: 'Scooby Doo Night Walkers', 
       description: 'Providing nighttime walks for your dogs',
       category_id: walker.id, 
-      species_id: dog.id
+      species_id: dog.id,
+      image_url: 'https://cdn.britannica.com/38/233138-050-43F8C7F7/Scooby-Doo-Witchs-Ghost-promotional-art.jpg?w=300'
     }),
     createService({ 
       name: 'Purrfect Groomers', 
       description: 'Grooming services for your kitties',
       category_id: groomer.id, 
-      species_id: cat.id
+      species_id: cat.id,
+      image_url: 'https://assets3.thrillist.com/v1/image/3059921/1200x630/flatten;crop_down;webp=auto;jpeg_quality=70'
     }),
     createService({ 
       name: 'Bugs Bunny Sitters', 
       description: 'The second home for bunnies',
       category_id: petsitter.id, 
-      species_id: rabbit.id
+      species_id: rabbit.id,
+      image_url: 'https://www.dndecorlance.com/cdn/shop/products/F747410D-51A1-4F35-9F55-5EF5CEB8107D.jpg?v=1680458090&width=1946'
     }),
     createService({ 
       name: 'Hamtaro Freud', 
       description: 'A place for hamster mental health',
       category_id: therapist.id, 
-      species_id: hamster.id
+      species_id: hamster.id,
+      image_url: 'https://static.wixstatic.com/media/5be228_7f1183150cc749fabaa4ff90d6af3686~mv2.png/v1/fill/w_640,h_480,fp_0.50_0.50,q_85,usm_0.66_1.00_0.01,enc_auto/5be228_7f1183150cc749fabaa4ff90d6af3686~mv2.png'
     }),
     createService({ 
       name: 'Wild Wild West Vets', 
       description: 'A vet specialized in reptiles and cold-blooded creatures',
       category_id: vet.id, 
-      species_id: lizard.id
+      species_id: lizard.id,
+      image_url: 'https://www.huntersville.carolinavet.com/files/cvs-huntersville-avian-exotic-2.jpg'
     })
   ]);
 
@@ -422,7 +436,7 @@ const init = async()=> {
   console.log(`# Get favorites for a specific user`);
   console.log(`curl -X GET http://localhost:3000/api/users/<userId>/favorites -H "Authorization: <token>"`);
 
-  console.log(`# Create a service provider`);
+  console.log(`# Create a service`);
   console.log(`curl -X POST http://localhost:3000/api/users/services -H "Content-Type: application/json" -d '{"name": "Provider Name", "category_id": 1, "species_id": 1}'`);
 
   console.log(`# Create a pet for a user`);
@@ -431,7 +445,7 @@ const init = async()=> {
   console.log(`# Create a favorite for a user`);
   console.log(`curl -X POST http://localhost:3000/api/users/<userId>/favorites -H "Content-Type: application/json" -d '{"service_id": 1}'`);
 
-  console.log(`# Create a review for a service provider`);
+  console.log(`# Create a review for a service`);
   console.log(`curl -X POST http://localhost:3000/api/users/<userId>/services/<serviceId>/reviews -H "Content-Type: application/json" -d '{"rating": 5, "review_text": "Great service!"}'`);
 
   console.log(`# Create a comment for a review`);
@@ -446,8 +460,11 @@ const init = async()=> {
   console.log(`# Get pet types`);
   console.log(`curl -X GET http://localhost:3000/api/species`);
 
-  console.log(`# Get service providers`);
+  console.log(`# Get service`);
   console.log(`curl -X GET http://localhost:3000/api/services`);
+  
+  console.log(`# Get service image url`);
+  console.log(`curl -X POST http://localhost:3000/api/users/services -H "Content-Type: application/json" -d '{"name": "Provider Name", "category_id": "1", "species_id": "1", "image_url": "http://example.com/image.jpg"}'`);
 
   console.log(`# Get comments for a review`);
   console.log(`curl -X GET http://localhost:3000/api/reviews/<reviewId>/comments`);

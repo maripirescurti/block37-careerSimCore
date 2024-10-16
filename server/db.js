@@ -38,7 +38,8 @@ const createTables = async() => {
       name VARCHAR(100) NOT NULL,
       category_id UUID REFERENCES categories(id) NOT NULL,
       species_id UUID REFERENCES species(id) NOT NULL,
-      description TEXT
+      description TEXT,
+      image_url VARCHAR(255)
     );
     CREATE TABLE pets(
       id UUID PRIMARY KEY,
@@ -120,13 +121,13 @@ const authenticate = async({ username, password}) => {
   return {token};
 }
 
-const createService = async({ name, category_id, species_id }) => {
+const createService = async({ name, category_id, species_id, image_url }) => {
   const SQL = `
-    INSERT INTO services(id, name, category_id, species_id)
-    VALUES($1, $2, $3, $4)
+    INSERT INTO services(id, name, category_id, species_id, image_url)
+    VALUES($1, $2, $3, $4, $5)
     RETURNING *
   `;
-  const response = await client.query(SQL, [uuid.v4(), name, category_id, species_id]);
+  const response = await client.query(SQL, [uuid.v4(), name, category_id, species_id, image_url]);
   return response.rows[0];
 };
 
