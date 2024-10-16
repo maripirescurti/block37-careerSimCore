@@ -9,7 +9,6 @@ const JWT = process.env.JWT || 'shh2!';
 // methods
 const createTables = async() => {
   const SQL = `
-    DROP TABLE IF EXISTS comments;
     DROP TABLE IF EXISTS reviews;
     DROP TABLE IF EXISTS favorites;
     DROP TABLE IF EXISTS pets;
@@ -17,6 +16,7 @@ const createTables = async() => {
     DROP TABLE IF EXISTS users;
     DROP TABLE IF EXISTS categories;
     DROP TABLE IF EXISTS species;
+
     CREATE TABLE users(
       id UUID PRIMARY KEY,
       first_name VARCHAR(100) NOT NULL,
@@ -25,14 +25,17 @@ const createTables = async() => {
       email VARCHAR(100) NOT NULL UNIQUE,
       password VARCHAR(100) NOT NULL
     );
+
     CREATE TABLE categories(
       id UUID PRIMARY KEY,
       category_name VARCHAR(50) NOT NULL UNIQUE
     );
+
     CREATE TABLE species(
       id UUID PRIMARY KEY,
       type_name VARCHAR(50) NOT NULL UNIQUE
     );
+
     CREATE TABLE services(
       id UUID PRIMARY KEY,
       name VARCHAR(100) NOT NULL,
@@ -41,6 +44,7 @@ const createTables = async() => {
       description TEXT,
       image_url VARCHAR(255)
     );
+
     CREATE TABLE pets(
       id UUID PRIMARY KEY,
       user_id UUID REFERENCES users(id) NOT NULL,
@@ -50,25 +54,20 @@ const createTables = async() => {
       age INTEGER,
       weight INTEGER
     );
+
     CREATE TABLE favorites(
       id UUID PRIMARY KEY,
       user_id UUID REFERENCES users(id) NOT NULL,
       service_id UUID REFERENCES services(id) NOT NULL,
       CONSTRAINT unique_favorite UNIQUE (user_id, service_id)
     );
+    
     CREATE TABLE reviews(
       id UUID PRIMARY KEY,
       user_id UUID REFERENCES users(id) NOT NULL,
       service_id UUID REFERENCES services(id) NOT NULL,
       rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
       review_text TEXT,
-      created_at TIMESTAMP DEFAULT NOW()
-    );
-    CREATE TABLE comments(
-      id UUID PRIMARY KEY,
-      review_id UUID REFERENCES reviews(id) NOT NULL,
-      user_id UUID REFERENCES users(id) NOT NULL,
-      text TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT NOW()
     );
   `;
@@ -162,17 +161,6 @@ const createReview = async({ user_id, service_id, rating, review_text }) => {
   return rows[0];
 };
 
-const createComment = async({ review_id, user_id, text }) => {
-  const SQL = `
-    INSERT INTO comments (id, review_id, user_id, text)
-    VALUES ($1, $2, $3, $4)
-    RETURNING *;
-  `;
-  const values = [uuid.v4(), review_id, user_id, text];
-  const { rows } = await client.query(SQL, values);
-  return rows[0];
-};
-
 const fetchUsers = async() => {
   const SQL = `
     SELECT * 
@@ -217,14 +205,11 @@ const fetchSingleService = async (id) => {
            species.type_name AS species_name,
            reviews.id AS review_id,
            reviews.rating,
-           reviews.review_text,
-           comments.id AS comment_id,
-           comments.text AS comment_text
+           reviews.review_text
     FROM services
     LEFT JOIN categories ON services.category_id = categories.id
     LEFT JOIN species ON services.species_id = species.id
     LEFT JOIN reviews ON services.id = reviews.service_id
-    LEFT JOIN comments ON reviews.id = comments.review_id
     WHERE services.id = $1
   `;
   const response = await client.query(SQL, [id]);
@@ -240,17 +225,7 @@ const fetchSingleService = async (id) => {
         id: row.review_id,
         rating: row.rating,
         review_text: row.review_text,
-        comments: [],
       });
-    }
-    if (row.comment_id) {
-      const review = service.reviews.find(r => r.id === row.review_id);
-      if (review) {
-        review.comments.push({
-          id: row.comment_id,
-          text: row.comment_text,
-        });
-      }
     }
   });
   return service;
@@ -276,26 +251,15 @@ const fetchFavorites = async(user_id) => {
   return response.rows;
 }
 
-const fetchReviews = async (providerId) => {
+const fetchReviews = async (serviceId) => {
   const SQL = `
     SELECT *
     FROM reviews
     WHERE service_id = $1;
   `;
-  const { rows } = await client.query(SQL, [providerId]);
+  const { rows } = await client.query(SQL, [serviceId]);
   return rows;
 };
-
-const fetchComments = async (reviewId) => {
-  const SQL = `
-    SELECT *
-    FROM comments
-    WHERE review_id = $1;
-  `;
-  const { rows } = await client.query(SQL, [reviewId]);
-  return rows;
-};
-
 
 const destroyFavorite = async(id, user_id) => {
   const SQL = `
@@ -340,7 +304,6 @@ module.exports = {
   createPet,
   createFavorite,
   createReview,
-  createComment,
   fetchUsers,
   fetchCategories,
   fetchSpecies,
@@ -349,7 +312,6 @@ module.exports = {
   fetchPets,
   fetchFavorites,
   fetchReviews,
-  fetchComments,
   destroyFavorite,
   authenticate,
   findUserByToken

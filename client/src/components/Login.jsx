@@ -6,6 +6,7 @@ export default function Login({setToken, setEmail }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
 
   async function handleSubmit(event) {
@@ -28,12 +29,18 @@ export default function Login({setToken, setEmail }) {
 
       setToken(result.token);
       setEmail(result.email);
-      setSuccessMessage("Login successful")
+      setSuccessMessage("Login successful!");
+      setIsLoggedIn(true);
+
+      // store token so keeps user logged in
+      localStorage.setItem('token', result.token);
+      localStorage.setItem('email', result.email);
 
       // clear inputs
       setUsername('');
       setPassword('');
       setError(null);
+
 
     } catch (error) {
       setError(error.message);
@@ -56,26 +63,27 @@ export default function Login({setToken, setEmail }) {
           </p>
         </div>
       )}
-      <form onSubmit={handleSubmit}>
-        <label>
-          Username: <input 
-          type="text" 
-          placeholder="Username"
-          value={username} 
-          onChange={(e) => setUsername(e.target.value)} 
-        />
-        </label>
-        <label>
-          Password: <input 
-          type="password" 
-          placeholder="Password"
-          value={password} 
-          onChange={(e) => setPassword(e.target.value)} 
-        />
-        </label>
-        <button type="submit">Login</button>
-      </form>
+      {!isLoggedIn && ( 
+        <form onSubmit={handleSubmit}>
+          <label>
+            Username: <input 
+            type="text" 
+            placeholder="Username"
+            value={username} 
+            onChange={(e) => setUsername(e.target.value)} 
+          />
+          </label>
+          <label>
+            Password: <input 
+            type="password" 
+            placeholder="Password"
+            value={password} 
+            onChange={(e) => setPassword(e.target.value)} 
+          />
+          </label>
+          <button type="submit">Login</button>
+        </form>
+      )}
     </>
-  )
-
+  );
 }

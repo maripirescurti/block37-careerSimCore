@@ -7,14 +7,20 @@ import SingleService from './components/SingleService.jsx';
 import Register from './components/Register.jsx';
 import Login from './components/Login.jsx';
 import Account from './components/Account.jsx';
+import { useEffect } from 'react';
 
 export default function App() {
-  const [token, setToken] = useState(null);
-  const [email, setEmail] = useState('');
+  const [token, setToken] = useState(localStorage.getItem('token') || null);
+  const [email, setEmail] = useState(localStorage.getItem('email') || '');
+  const [isLoggedIn, setIsLoggedIn] = useState(!!token);
+
+  useEffect(() => {
+    setIsLoggedIn(!!token);
+  }, [token]);
 
   return (
     <>
-      <BrowserRouter>
+    <BrowserRouter>
       <NavBar />
       <Routes>
         <Route path='/' element={<Services token={token}/>} />

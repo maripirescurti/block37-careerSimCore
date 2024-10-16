@@ -9,7 +9,6 @@ const {
   createPet,
   createFavorite,
   createReview,
-  createComment,
   fetchUsers,
   fetchCategories,
   fetchSpecies,
@@ -18,7 +17,6 @@ const {
   fetchPets,
   fetchFavorites,
   fetchReviews,
-  fetchComments,
   destroyFavorite,
   authenticate,
   findUserByToken,
@@ -50,6 +48,36 @@ const {
  app.post('/api/auth/login', async(req, res, next) => {
   try {
     res.send(await authenticate(req.body));
+  } catch(ex) {
+    next(ex);
+  }
+ });
+
+ app.post('/api/auth/register', async(req, res, next) => {
+  const { first_name, last_name, username, email, password } = req.body;
+
+  try {
+    // check if user exists
+    const existingUser = await fetchUsers(); 
+    if (existingUser.some(user => user.username === username || user.email === email)) {
+      return res.status(400).send({message: 'User with this username or email already exists.'});
+    }
+
+    // hash password
+    const hashedPassword = await bcrypt.hash(password, 5);
+
+    // create user in database
+    const newUser = await createUser({
+      first_name,
+      last_name,
+      username,
+      email,
+      password: hashedPassword,
+    });
+
+    // respond with user's info (without password)
+    const { password: _, ...userWithoutPassword } = newUser;
+    res.status(201).send(userWithoutPassword);
   } catch(ex) {
     next(ex);
   }
@@ -106,6 +134,19 @@ app.get('/api/services/:id', async(req, res, next) => {
       return res.status(404).send({ message: 'Service not found' });
     }
     res.send(service);
+  } catch(ex) {
+    next(ex);
+  }
+});
+
+app.get('/api/services/:id/reviews', async(req, res, next) => {
+  const serviceId = req.params.id;
+  try {
+    const service = await fetchReviews(serviceId);
+    if (!reviews || reviews.length === 0) {
+      return res.status(404).send({ message: 'No reviews found for this service' });
+    }
+    res.send(reviews);
   } catch(ex) {
     next(ex);
   }
@@ -205,24 +246,6 @@ app.post('/api/users/:userId/services/:serviceId/reviews', isLoggedIn, async(req
   }
 });
 
-app.post('/api/reviews/:reviewId/comments', isLoggedIn, async(req, res, next) => {
-  try {
-    if (req.params.userId !== req.user.id) {
-      const error = Error('not authorized');
-      error.status = 401;
-      throw error;
-    }
-    const comment = await createComment({
-      review_id: req.params.reviewId,
-      user_id: req.user.id,
-      text: req.body.text,
-    });
-    res.status(201).send(comment);
-  } catch (ex) {
-    next(ex);
-  }
-});
-
 
 // DELETE
 app.delete('/api/users/:userId/favorites/:id', isLoggedIn, async(req, res, next) => {
@@ -235,16 +258,6 @@ app.delete('/api/users/:userId/favorites/:id', isLoggedIn, async(req, res, next)
     await destroyFavorite({ id: req.params.id, user_id: req.params.userId});
     res.sendStatus(204);
   } catch(ex) {
-    next(ex);
-  }
-});
-
-// GET COMMENTS
-app.get('/api/reviews/:reviewId/comments', async (req, res, next) => {
-  try {
-    const comments = await fetchComments(req.params.reviewId);
-    res.send(comments);
-  } catch (ex) {
     next(ex);
   }
 });
@@ -408,24 +421,6 @@ const init = async()=> {
     }),
   ]);
 
-  const comments = await Promise.all([
-    createComment({
-      review_id: reviews[0].id,
-      user_id: ozan.id,
-      text: 'I agree! The best nighttime service.'
-    }),
-    createComment({
-      review_id: reviews[1].id,
-      user_id: gui.id,
-      text: 'I found it worth every penny.'
-    }),
-    createComment({
-      review_id: reviews[2].id,
-      user_id: celdy.id,
-      text: 'Bunny loves it there!'
-    }),
-  ]);
-
   console.log(await fetchServices());
 
   console.log(await fetchPets());
@@ -440,6 +435,18 @@ const init = async()=> {
 
   console.log(`# User login`);
   console.log(`curl -X POST http://localhost:3000/api/auth/login -H "Content-Type: application/json" -d '{"username": "maricurti", "password": "shh2!"}'`);
+
+  console.log(`# User register`);
+  console.log(`curl -X POST http://localhost:3000/api/auth/register \
+    -H "Content-Type: application/json" \
+    -d '{
+      "first_name": "John",
+      "last_name": "Doe",
+      "username": "johndoe",
+      "email": "johndoe@example.com",
+      "password": "yourSecurePassword"
+    }'
+  `);
 
   console.log(`# Get logged-in user details`);
   console.log(`curl -X GET http://localhost:3000/api/auth/me -H "Authorization: <token>"`);
@@ -465,9 +472,6 @@ const init = async()=> {
   console.log(`# Create a review for a service`);
   console.log(`curl -X POST http://localhost:3000/api/users/<userId>/services/<serviceId>/reviews -H "Content-Type: application/json" -d '{"rating": 5, "review_text": "Great service!"}'`);
 
-  console.log(`# Create a comment for a review`);
-  console.log(`curl -X POST http://localhost:3000/api/reviews/<reviewId>/comments -H "Authorization: <token>" -H "Content-Type: application/json" -d '{"text": "I totally agree!"}'`);
-
   console.log(`# Delete a favorite`);
   console.log(`curl -X DELETE http://localhost:3000/api/users/<userId>/favorites/<favoriteId> -H "Authorization: <token>"`);
 
@@ -486,9 +490,7 @@ const init = async()=> {
   console.log(`# Get service image url`);
   console.log(`curl -X POST http://localhost:3000/api/users/services -H "Content-Type: application/json" -d '{"name": "Provider Name", "category_id": "1", "species_id": "1", "image_url": "http://example.com/image.jpg"}'`);
 
-  console.log(`# Get comments for a review`);
-  console.log(`curl -X GET http://localhost:3000/api/reviews/<reviewId>/comments`);
-
+  // express listen to port 3000
   const port = process.env.PORT || 3000;
   app.listen(port, () => console.log(`listening on port ${port}`));
 };

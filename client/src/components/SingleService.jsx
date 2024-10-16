@@ -47,16 +47,6 @@ export default function SingleService() {
           <div key={review.id} className="review">
             <p><strong>Rating:</strong> {review.rating}</p>
             <p>{review.review_text}</p>
-            <h4>Comments:</h4>
-            {review.comments.length === 0 ? (
-              <p>No comments yet.</p>
-            ) : (
-              review.comments.map(comment => (
-                <div key={comment.id} className="comment">
-                  <p>{comment.text}</p>
-                </div>
-              ))
-            )}
           </div>
         ))
       )}
