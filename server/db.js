@@ -35,16 +35,16 @@ const createTables = async() => {
     );
     CREATE TABLE services(
       id UUID PRIMARY KEY,
-      provider_name VARCHAR(100) NOT NULL,
+      name VARCHAR(100) NOT NULL,
       category_id UUID REFERENCES categories(id) NOT NULL,
-      pet_type_id UUID REFERENCES species(id) NOT NULL,
+      species_id UUID REFERENCES species(id) NOT NULL,
       description TEXT
     );
     CREATE TABLE pets(
       id UUID PRIMARY KEY,
       user_id UUID REFERENCES users(id) NOT NULL,
       pet_name VARCHAR(100) NOT NULL,
-      pet_type_id UUID REFERENCES species(id) NOT NULL,
+      species_id UUID REFERENCES species(id) NOT NULL,
       breed VARCHAR(100),
       age INTEGER,
       weight INTEGER
@@ -52,13 +52,13 @@ const createTables = async() => {
     CREATE TABLE favorites(
       id UUID PRIMARY KEY,
       user_id UUID REFERENCES users(id) NOT NULL,
-      provider_id UUID REFERENCES services(id) NOT NULL,
-      CONSTRAINT unique_favorite UNIQUE (user_id, provider_id)
+      service_id UUID REFERENCES services(id) NOT NULL,
+      CONSTRAINT unique_favorite UNIQUE (user_id, service_id)
     );
     CREATE TABLE reviews(
       id UUID PRIMARY KEY,
       user_id UUID REFERENCES users(id) NOT NULL,
-      provider_id UUID REFERENCES services(id) NOT NULL,
+      service_id UUID REFERENCES services(id) NOT NULL,
       rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
       review_text TEXT,
       created_at TIMESTAMP DEFAULT NOW()
@@ -120,43 +120,43 @@ const authenticate = async({ username, password}) => {
   return {token};
 }
 
-const createService = async({ provider_name, category_id, pet_type_id }) => {
+const createService = async({ name, category_id, species_id }) => {
   const SQL = `
-    INSERT INTO services(id, provider_name, category_id, pet_type_id)
+    INSERT INTO services(id, name, category_id, species_id)
     VALUES($1, $2, $3, $4)
     RETURNING *
   `;
-  const response = await client.query(SQL, [uuid.v4(), provider_name, category_id, pet_type_id]);
+  const response = await client.query(SQL, [uuid.v4(), name, category_id, species_id]);
   return response.rows[0];
 };
 
-const createPet = async({ user_id, pet_name, pet_type_id, breed, age, weight }) => {
+const createPet = async({ user_id, pet_name, species_id, breed, age, weight }) => {
   const SQL = `
-    INSERT INTO pets(id, user_id, pet_name, pet_type_id, breed, age, weight)
+    INSERT INTO pets(id, user_id, pet_name, species_id, breed, age, weight)
     VALUES($1, $2, $3, $4, $5, $6, $7)
     RETURNING *
   `;
-  const response = await client.query(SQL, [uuid.v4(), user_id, pet_name, pet_type_id, breed, age, weight]);
+  const response = await client.query(SQL, [uuid.v4(), user_id, pet_name, species_id, breed, age, weight]);
   return response.rows[0];
 };
 
-const createFavorite = async({ user_id, provider_id }) => {
+const createFavorite = async({ user_id, service_id }) => {
   const SQL = `
-    INSERT INTO favorites(id, user_id, provider_id)
+    INSERT INTO favorites(id, user_id, service_id)
     VALUES($1, $2, $3)
     RETURNING *
   `;
-  const response = await client.query(SQL, [uuid.v4(), user_id, provider_id]);
+  const response = await client.query(SQL, [uuid.v4(), user_id, service_id]);
   return response.rows[0];
 };
 
-const createReview = async({ user_id, provider_id, rating, review_text }) => {
+const createReview = async({ user_id, service_id, rating, review_text }) => {
   const SQL = `
-    INSERT INTO reviews (id, user_id, provider_id, rating, review_text)
+    INSERT INTO reviews (id, user_id, service_id, rating, review_text)
     VALUES ($1, $2, $3, $4, $5)
     RETURNING *;
   `;
-  const values = [uuid.v4(), user_id, provider_id, rating, review_text];
+  const values = [uuid.v4(), user_id, service_id, rating, review_text];
   const { rows } = await client.query(SQL, values);
   return rows[0];
 };
@@ -232,7 +232,7 @@ const fetchReviews = async (providerId) => {
   const SQL = `
     SELECT *
     FROM reviews
-    WHERE provider_id = $1;
+    WHERE service_id = $1;
   `;
   const { rows } = await client.query(SQL, [providerId]);
   return rows;

@@ -22,6 +22,7 @@ const {
   authenticate,
   findUserByToken,
  } = require('./db');
+
  const express = require('express');
  const app = express();
  app.use(express.json());
@@ -116,9 +117,9 @@ app.get('/api/users/:id/favorites', isLoggedIn, async(req, res, next) => {
 app.post('/api/users/services', async(req, res, next) => {
   try {
     res.status(201).send(await createService({
-      provider_name: req.body.provider_name,
+      name: req.body.name,
       category_id: req.body.category_id, 
-      pet_type_id: req.body.pet_type_id
+      species_id: req.body.species_id
     }));
   } catch(ex) {
     next(ex);
@@ -136,7 +137,7 @@ app.post('/api/users/:id/pets', isLoggedIn, async(req, res, next) => {
     res.status(201).send(await createPet({
       user_id: req.params.id, 
       pet_name: req.body.pet_name,
-      pet_type_id: req.body.pet_type_id,
+      species_id: req.body.species_id,
       breed: req.body.breed,
       age: req.body.age,
       weight: req.body.weight,
@@ -154,7 +155,7 @@ app.post('/api/users/:id/favorites', isLoggedIn, async(req, res, next) => {
       error.status = 401;
       throw error;
     }
-    res.status(201).send(await createFavorite({user_id: req.params.id, provider_id: req.body.provider_id}));
+    res.status(201).send(await createFavorite({user_id: req.params.id, service_id: req.body.service_id}));
   } catch(ex) {
     next(ex);
   }
@@ -169,7 +170,7 @@ app.post('/api/users/:userId/services/:serviceId/reviews', isLoggedIn, async(req
     }
     const review = await createReview({
       user_id: req.params.userId,
-      provider_id: req.params.serviceId,
+      service_id: req.params.serviceId,
       rating: req.body.rating,
       review_text: req.body.review_text,
     });
@@ -257,34 +258,34 @@ const init = async()=> {
 
   const [scoobyDoo, purrfectGroomers, bugsBunnySitters, hamtaroFreud, wwwv] = await Promise.all([
     createService({ 
-      provider_name: 'Scooby Doo Night Walkers', 
+      name: 'Scooby Doo Night Walkers', 
       description: 'Providing nighttime walks for your dogs',
       category_id: walker.id, 
-      pet_type_id: dog.id
+      species_id: dog.id
     }),
     createService({ 
-      provider_name: 'Purrfect Groomers', 
+      name: 'Purrfect Groomers', 
       description: 'Grooming services for your kitties',
       category_id: groomer.id, 
-      pet_type_id: cat.id
+      species_id: cat.id
     }),
     createService({ 
-      provider_name: 'Bugs Bunny Sitters', 
+      name: 'Bugs Bunny Sitters', 
       description: 'The second home for bunnies',
       category_id: petsitter.id, 
-      pet_type_id: rabbit.id
+      species_id: rabbit.id
     }),
     createService({ 
-      provider_name: 'Hamtaro Freud', 
+      name: 'Hamtaro Freud', 
       description: 'A place for hamster mental health',
       category_id: therapist.id, 
-      pet_type_id: hamster.id
+      species_id: hamster.id
     }),
     createService({ 
-      provider_name: 'Wild Wild West Vets', 
+      name: 'Wild Wild West Vets', 
       description: 'A vet specialized in reptiles and cold-blooded creatures',
       category_id: vet.id, 
-      pet_type_id: lizard.id
+      species_id: lizard.id
     })
   ]);
 
@@ -292,7 +293,7 @@ const init = async()=> {
     createPet({ 
       user_id: mari.id, 
       pet_name: 'Simba',
-      pet_type_id: dog.id,
+      species_id: dog.id,
       breed: 'maltipoo',
       age: 2,
       weight: 13 
@@ -300,7 +301,7 @@ const init = async()=> {
     createPet({ 
       user_id: mari.id, 
       pet_name: 'Rex',
-      pet_type_id: hamster.id,
+      species_id: hamster.id,
       breed: 'roborovki',
       age: 2,
       weight: 1
@@ -308,7 +309,7 @@ const init = async()=> {
     createPet({ 
       user_id: ozan.id, 
       pet_name: 'Lucy',
-      pet_type_id: cat.id,
+      species_id: cat.id,
       breed: 'orange',
       age: 15,
       weight: 15 
@@ -316,7 +317,7 @@ const init = async()=> {
     createPet({ 
       user_id: luis.id, 
       pet_name: 'Moe',
-      pet_type_id: dog.id,
+      species_id: dog.id,
       breed: 'labrador',
       age: 13,
       weight: 60 
@@ -324,7 +325,7 @@ const init = async()=> {
     createPet({ 
       user_id: celdy.id, 
       pet_name: 'Jamaica',
-      pet_type_id: dog.id,
+      species_id: dog.id,
       breed: 'jackRussel',
       age: 6,
       weight: 20 
@@ -332,7 +333,7 @@ const init = async()=> {
     createPet({ 
       user_id: gui.id, 
       pet_name: 'Indiana-Jones',
-      pet_type_id: lizard.id,
+      species_id: lizard.id,
       breed: 'beardedDragon',
       age: 1,
       weight: 5
@@ -340,7 +341,7 @@ const init = async()=> {
     createPet({ 
       user_id: gui.id, 
       pet_name: 'Johnny',
-      pet_type_id: rabbit.id,
+      species_id: rabbit.id,
       breed: 'hollandLop',
       age: 2,
       weight: 9
@@ -348,29 +349,29 @@ const init = async()=> {
   ]);
 
   const favorites = await Promise.all([
-    createFavorite({ user_id: mari.id, provider_id: scoobyDoo.id }),
-    createFavorite({ user_id: mari.id, provider_id: hamtaroFreud.id }),
-    createFavorite({ user_id: ozan.id, provider_id: purrfectGroomers.id }),
-    createFavorite({ user_id: luis.id, provider_id: scoobyDoo.id }),
-    createFavorite({ user_id: gui.id, provider_id: wwwv.id }),
+    createFavorite({ user_id: mari.id, service_id: scoobyDoo.id }),
+    createFavorite({ user_id: mari.id, service_id: hamtaroFreud.id }),
+    createFavorite({ user_id: ozan.id, service_id: purrfectGroomers.id }),
+    createFavorite({ user_id: luis.id, service_id: scoobyDoo.id }),
+    createFavorite({ user_id: gui.id, service_id: wwwv.id }),
   ])
 
   const reviews = await Promise.all([
     createReview({
       user_id: mari.id,
-      provider_id: scoobyDoo.id,
+      service_id: scoobyDoo.id,
       rating: 5,
       review_text: 'Amazing service! My dog loves the night walks!'
     }),
     createReview({
       user_id: ozan.id,
-      provider_id: purrfectGroomers.id,
+      service_id: purrfectGroomers.id,
       rating: 4,
       review_text: 'Great grooming, but a bit pricey'
     }),
     createReview({
       user_id: luis.id,
-      provider_id: bugsBunnySitters.id,
+      service_id: bugsBunnySitters.id,
       rating: 5,
       review_text: 'BunBun is always well taken care of!'
     }),
@@ -422,13 +423,13 @@ const init = async()=> {
   console.log(`curl -X GET http://localhost:3000/api/users/<userId>/favorites -H "Authorization: <token>"`);
 
   console.log(`# Create a service provider`);
-  console.log(`curl -X POST http://localhost:3000/api/users/services -H "Content-Type: application/json" -d '{"provider_name": "Provider Name", "category_id": 1, "pet_type_id": 1}'`);
+  console.log(`curl -X POST http://localhost:3000/api/users/services -H "Content-Type: application/json" -d '{"name": "Provider Name", "category_id": 1, "species_id": 1}'`);
 
   console.log(`# Create a pet for a user`);
-  console.log(`curl -X POST http://localhost:3000/api/users/<userId>/pets -H "Content-Type: application/json" -d '{"pet_name": "Pet Name", "pet_type_id": 1, "breed": "Breed", "age": 2, "weight": 10}'`);
+  console.log(`curl -X POST http://localhost:3000/api/users/<userId>/pets -H "Content-Type: application/json" -d '{"pet_name": "Pet Name", "species_id": 1, "breed": "Breed", "age": 2, "weight": 10}'`);
 
   console.log(`# Create a favorite for a user`);
-  console.log(`curl -X POST http://localhost:3000/api/users/<userId>/favorites -H "Content-Type: application/json" -d '{"provider_id": 1}'`);
+  console.log(`curl -X POST http://localhost:3000/api/users/<userId>/favorites -H "Content-Type: application/json" -d '{"service_id": 1}'`);
 
   console.log(`# Create a review for a service provider`);
   console.log(`curl -X POST http://localhost:3000/api/users/<userId>/services/<serviceId>/reviews -H "Content-Type: application/json" -d '{"rating": 5, "review_text": "Great service!"}'`);
