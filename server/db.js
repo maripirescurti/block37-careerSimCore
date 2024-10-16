@@ -117,7 +117,7 @@ const authenticate = async({ username, password}) => {
     error.status = 401;
     throw error;
   }
-  const token = await jwt.sign({ id: response.rows[0].id, JWT});
+  const token = await jwt.sign({ id: response.rows[0].id }, JWT);
   return {token};
 }
 

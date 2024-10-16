@@ -19,7 +19,7 @@ export default function App() {
       <Routes>
         <Route path='/' element={<Services token={token}/>} />
         <Route path='/services/:id' element={<SingleService token={token} />} />
-        <Route path='/login' element={<Login setToken={setToken} email={setEmail} />} />
+        <Route path='/login' element={<Login setToken={setToken} setEmail={setEmail}/>} />
         <Route path='/register' element={<Register setToken={setToken} />} />
         <Route path='/account' element={<Account token={token} />} />
       </Routes>
