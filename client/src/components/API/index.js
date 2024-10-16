@@ -3,6 +3,7 @@ export const fetchServices = async () => {
 
   if (response.ok) {
     const json = await response.json();
+    console.log(response);
     return json;
   } else {
     const errorJson = await response.json();

@@ -11,7 +11,7 @@ export default function Services({ token }) {
     const getServices = async () => {
       try {
         const data = await fetchServices();
-        setServices(data.services || []);
+        setServices(data || []);
       } catch (error) {
         console.error('Error fetching services', error);
         setServices([]);
