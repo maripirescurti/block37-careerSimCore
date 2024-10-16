@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { addFavorite, fetchServices } from "./API";
+import { fetchServices, addFavorite } from "./API";
 import { useNavigate } from "react-router-dom";
 
 export default function Services({ token }) {
   const [services, setServices] = useState([]);
+  // const [categories, setCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
@@ -21,7 +22,7 @@ export default function Services({ token }) {
   }, []);
 
   const filteredServices = services.filter(service =>
-    service.category_id.toLowerCase().includes(searchTerm.toLowerCase())
+    service.category_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleKeyDown = (e) => {
@@ -65,7 +66,7 @@ export default function Services({ token }) {
             >
               <img src={service.image_url} alt={service.name} className="service-image" />
               <h4>{service.name}</h4>
-              <p>{service.category_id}</p>
+              <p>{service.category_name}</p>
               <div className="button-container">
                 <button onClick={() => navigate(`/services/${service.id}`)} className="service-button">View Details</button>
                 <button onClick={() => handleFavorite(service.id)} className="favorite-button">Add to Favorites</button>

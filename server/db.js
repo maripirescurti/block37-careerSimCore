@@ -68,7 +68,7 @@ const createTables = async() => {
       id UUID PRIMARY KEY,
       review_id UUID REFERENCES reviews(id) NOT NULL,
       user_id UUID REFERENCES users(id) NOT NULL,
-      comment_text TEXT NOT NULL,
+      text TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT NOW()
     );
   `;
@@ -162,13 +162,13 @@ const createReview = async({ user_id, service_id, rating, review_text }) => {
   return rows[0];
 };
 
-const createComment = async({ review_id, user_id, comment_text }) => {
+const createComment = async({ review_id, user_id, text }) => {
   const SQL = `
-    INSERT INTO comments (id, review_id, user_id, comment_text)
+    INSERT INTO comments (id, review_id, user_id, text)
     VALUES ($1, $2, $3, $4)
     RETURNING *;
   `;
-  const values = [uuid.v4(), review_id, user_id, comment_text];
+  const values = [uuid.v4(), review_id, user_id, text];
   const { rows } = await client.query(SQL, values);
   return rows[0];
 };
@@ -202,12 +202,59 @@ const fetchSpecies = async() => {
 
 const fetchServices = async() => {
   const SQL = `
-    SELECT * 
+    SELECT services.*, 
+           categories.category_name
     FROM services
-  `;
-  const response = await client.query(SQL);
+    LEFT JOIN categories ON services.category_id = categories.id
+`;  const response = await client.query(SQL);
   return response.rows;
 }
+
+const fetchSingleService = async (id) => {
+  const SQL = `
+    SELECT services.*, 
+           categories.category_name, 
+           species.type_name AS species_name,
+           reviews.id AS review_id,
+           reviews.rating,
+           reviews.review_text,
+           comments.id AS comment_id,
+           comments.text AS comment_text
+    FROM services
+    LEFT JOIN categories ON services.category_id = categories.id
+    LEFT JOIN species ON services.species_id = species.id
+    LEFT JOIN reviews ON services.id = reviews.service_id
+    LEFT JOIN comments ON reviews.id = comments.review_id
+    WHERE services.id = $1
+  `;
+  const response = await client.query(SQL, [id]);
+
+  const service = {
+    ...response.rows[0],
+    reviews: [],
+  };
+
+  response.rows.forEach(row => {
+    if (row.review_id) {
+      service.reviews.push({
+        id: row.review_id,
+        rating: row.rating,
+        review_text: row.review_text,
+        comments: [],
+      });
+    }
+    if (row.comment_id) {
+      const review = service.reviews.find(r => r.id === row.review_id);
+      if (review) {
+        review.comments.push({
+          id: row.comment_id,
+          text: row.comment_text,
+        });
+      }
+    }
+  });
+  return service;
+};
 
 const fetchPets = async(user_id) => {
   const SQL = `
@@ -298,6 +345,7 @@ module.exports = {
   fetchCategories,
   fetchSpecies,
   fetchServices,
+  fetchSingleService,
   fetchPets,
   fetchFavorites,
   fetchReviews,

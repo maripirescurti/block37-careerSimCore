@@ -1,5 +1,20 @@
+
 export const fetchServices = async () => {
   const response = await fetch('http://localhost:3000/api/services');
+
+  if (response.ok) {
+    const json = await response.json();
+    // console.log(response);
+    return json;
+  } else {
+    const errorJson = await response.json();
+    console.error('Error fetching services', errorJson);
+    throw new Error(`Error fetching services: ${errorJson.message}`);
+  }
+};
+
+export const fetchCategories = async () => {
+  const response = await fetch('http://localhost:3000/api/categories');
 
   if (response.ok) {
     const json = await response.json();
@@ -7,16 +22,17 @@ export const fetchServices = async () => {
     return json;
   } else {
     const errorJson = await response.json();
-    console.error('Error fetching services', errorJson);
-    throw new Error(`Error fetching services: ${errorJson.message}`);
+    console.error('Error fetching categories', errorJson);
+    throw new Error(`Error fetching categories: ${errorJson.message}`);
   }
-  return response.json();
 };
 
 export const fetchServiceById = async (id) => {
   const response = await fetch(`http://localhost:3000/api/services/${id}`);
   if (!response.ok) {
-    throw new Error('Failed to fetch book');
+    const errorJson = await response.json();
+    console.error('Error fetching service:', errorJson);
+    throw new Error(`Error fetching service: ${errorJson.message || 'Service not found'}`);
   }
   return response.json();
 };

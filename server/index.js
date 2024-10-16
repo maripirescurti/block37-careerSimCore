@@ -14,6 +14,7 @@ const {
   fetchCategories,
   fetchSpecies,
   fetchServices,
+  fetchSingleService,
   fetchPets,
   fetchFavorites,
   fetchReviews,
@@ -92,6 +93,19 @@ app.get('/api/species', async(req, res, next) => {
 app.get('/api/services', async(req, res, next) => {
   try {
     res.send(await fetchServices());
+  } catch(ex) {
+    next(ex);
+  }
+});
+
+app.get('/api/services/:id', async(req, res, next) => {
+  const serviceId = req.params.id;
+  try {
+    const service = await fetchSingleService(serviceId);
+    if (!service) {
+      return res.status(404).send({ message: 'Service not found' });
+    }
+    res.send(service);
   } catch(ex) {
     next(ex);
   }
@@ -201,7 +215,7 @@ app.post('/api/reviews/:reviewId/comments', isLoggedIn, async(req, res, next) =>
     const comment = await createComment({
       review_id: req.params.reviewId,
       user_id: req.user.id,
-      comment_text: req.body.comment_text,
+      text: req.body.text,
     });
     res.status(201).send(comment);
   } catch (ex) {
@@ -397,17 +411,17 @@ const init = async()=> {
     createComment({
       review_id: reviews[0].id,
       user_id: ozan.id,
-      comment_text: 'I agree! The best nighttime service.'
+      text: 'I agree! The best nighttime service.'
     }),
     createComment({
       review_id: reviews[1].id,
       user_id: gui.id,
-      comment_text: 'I found it worth every penny.'
+      text: 'I found it worth every penny.'
     }),
     createComment({
       review_id: reviews[2].id,
       user_id: celdy.id,
-      comment_text: 'Bunny loves it there!'
+      text: 'Bunny loves it there!'
     }),
   ]);
 
@@ -451,7 +465,7 @@ const init = async()=> {
   console.log(`curl -X POST http://localhost:3000/api/users/<userId>/services/<serviceId>/reviews -H "Content-Type: application/json" -d '{"rating": 5, "review_text": "Great service!"}'`);
 
   console.log(`# Create a comment for a review`);
-  console.log(`curl -X POST http://localhost:3000/api/reviews/<reviewId>/comments -H "Authorization: <token>" -H "Content-Type: application/json" -d '{"comment_text": "I totally agree!"}'`);
+  console.log(`curl -X POST http://localhost:3000/api/reviews/<reviewId>/comments -H "Authorization: <token>" -H "Content-Type: application/json" -d '{"text": "I totally agree!"}'`);
 
   console.log(`# Delete a favorite`);
   console.log(`curl -X DELETE http://localhost:3000/api/users/<userId>/favorites/<favoriteId> -H "Authorization: <token>"`);
@@ -464,6 +478,9 @@ const init = async()=> {
 
   console.log(`# Get service`);
   console.log(`curl -X GET http://localhost:3000/api/services`);
+  
+  console.log(`# Get single service`);
+  console.log(`curl -X GET http://localhost:3000/api/services/<serviceId>`);
   
   console.log(`# Get service image url`);
   console.log(`curl -X POST http://localhost:3000/api/users/services -H "Content-Type: application/json" -d '{"name": "Provider Name", "category_id": "1", "species_id": "1", "image_url": "http://example.com/image.jpg"}'`);
