@@ -9,6 +9,7 @@ const {
   createPet,
   createFavorite,
   createReview,
+  createComment,
   fetchUsers,
   fetchCategories,
   fetchSpecies,
@@ -17,7 +18,13 @@ const {
   fetchPets,
   fetchFavorites,
   fetchReviews,
+  fetchComments,
+  updatePet,
+  updateReview,
+  updateComment,
   destroyFavorite,
+  destroyReview,
+  destroyComment,
   authenticate,
   findUserByToken,
  } = require('./db');
@@ -35,15 +42,27 @@ const {
 //  app.use('/assets', express);
 
  // middleware to ensure logged user
- const isLoggedIn = async(req, res, next) => {
-  try {
-    req.user = await findUserByToken(req.headers.authorization);
-    next();
-  } catch(ex) {
-    next(ex);
-  }
- };
+ const isLoggedIn = async (req, res, next) => {
+  const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
 
+  if (!token) {
+    return res.status(401).send('Not authorized: No token provided');
+  }
+
+  try {
+    const user = await findUserByToken(token);
+    if (!user) {
+      return res.status(401).send('Not authorized: Invalid token');
+    }
+    req.user = user; // Attach user info to request
+    next();
+  } catch (err) {
+    console.error(err);
+    return res.status(500).send('Internal Server Error');
+  }
+};
+ 
+ // APP ROUTES
  // Authentication Routes
  app.post('/api/auth/login', async(req, res, next) => {
   try {
@@ -54,30 +73,9 @@ const {
  });
 
  app.post('/api/auth/register', async(req, res, next) => {
-  const { first_name, last_name, username, email, password } = req.body;
 
   try {
-    // check if user exists
-    const existingUser = await fetchUsers(); 
-    if (existingUser.some(user => user.username === username || user.email === email)) {
-      return res.status(400).send({message: 'User with this username or email already exists.'});
-    }
-
-    // hash password
-    const hashedPassword = await bcrypt.hash(password, 5);
-
-    // create user in database
-    const newUser = await createUser({
-      first_name,
-      last_name,
-      username,
-      email,
-      password: hashedPassword,
-    });
-
-    // respond with user's info (without password)
-    const { password: _, ...userWithoutPassword } = newUser;
-    res.status(201).send(userWithoutPassword);
+    res.send(await createUser(req.body));
   } catch(ex) {
     next(ex);
   }
@@ -91,8 +89,7 @@ const {
   }
  });
 
-// APP ROUTES
-// GET ROUTE
+// GET ROUTES
 
 app.get('/api/users', async(req, res, next) => {
   try {
@@ -142,11 +139,24 @@ app.get('/api/services/:id', async(req, res, next) => {
 app.get('/api/services/:id/reviews', async(req, res, next) => {
   const serviceId = req.params.id;
   try {
-    const service = await fetchReviews(serviceId);
+    const reviews = await fetchReviews(serviceId);
     if (!reviews || reviews.length === 0) {
       return res.status(404).send({ message: 'No reviews found for this service' });
     }
     res.send(reviews);
+  } catch(ex) {
+    next(ex);
+  }
+});
+
+app.get('/api/services/:serviceId/reviews/:reviewId/comments', async(req, res, next) => {
+  const reviewId = req.params.reviewId;
+  try {
+    const comments = await fetchComments(reviewId);
+    if (!comments || comments.length === 0) {
+      return res.status(404).send({ message: 'No reviews found for this service' });
+    }
+    res.send(comments);
   } catch(ex) {
     next(ex);
   }
@@ -179,12 +189,13 @@ app.get('/api/users/:id/favorites', isLoggedIn, async(req, res, next) => {
 });
 
 // CREATE
-app.post('/api/users/services', async(req, res, next) => {
+app.post('/api/services', async(req, res, next) => {
   try {
     res.status(201).send(await createService({
       name: req.body.name,
       category_id: req.body.category_id, 
       species_id: req.body.species_id,
+      description: req.body.description,
       image_url: req.body.image_url
     }));
   } catch(ex) {
@@ -246,21 +257,143 @@ app.post('/api/users/:userId/services/:serviceId/reviews', isLoggedIn, async(req
   }
 });
 
-
-// DELETE
-app.delete('/api/users/:userId/favorites/:id', isLoggedIn, async(req, res, next) => {
+app.post('/api/users/:userId/services/:serviceId/reviews/:reviewId/comments', isLoggedIn, async(req, res, next) => {
   try {
-    if(req.params.id !== req.user.id){
+    if (req.params.userId !== req.user.id) {
       const error = Error('not authorized');
       error.status = 401;
       throw error;
     }
-    await destroyFavorite({ id: req.params.id, user_id: req.params.userId});
-    res.sendStatus(204);
-  } catch(ex) {
+    const comment = await createComment({
+      review_id: req.params.reviewId,
+      user_id: req.params.userId,
+      comment_text: req.body.comment_text,
+    });
+    res.status(201).send(comment);
+  } catch (ex) {
     next(ex);
   }
 });
+
+// UPDATE
+app.put('/api/users/:userId/pets/:id', isLoggedIn, async (req, res, next) => {
+  const { age, weight } = req.body;
+  const user_id = req.user.id;
+
+  try {
+    const updatedPet = await updatePet({
+      user_id,
+      age,
+      weight
+    });
+    res.status(200).json(updatedPet);
+  } catch (error) {
+    if (error.message === 'Pet not found') {
+      return res.status(404).json({ message: 'Pet not found' });
+    }
+    console.error(error); 
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+app.put('/api/users/:userId/services/:serviceId/reviews', isLoggedIn, async (req, res, next) => {
+  const { rating, review_text } = req.body;
+  const user_id = req.user.id;
+  const service_id = req.params.serviceId;
+
+  try {
+    const updatedReview = await updateReview({
+      user_id,
+      service_id,
+      rating,
+      review_text,
+    });
+    res.status(200).json(updatedReview);
+  } catch (error) {
+    if (error.message === 'Review not found') {
+      return res.status(404).json({ message: 'Review not found' });
+    }
+    console.error(error); 
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+app.put('/api/users/:userId/services/:serviceId/reviews/:reviewId/comments/:commentId', isLoggedIn, async (req, res, next) => {
+  const { comment_text } = req.body;
+  const { reviewId, commentId } = req.params;
+  const user_id = req.user.id;
+
+  try {
+    const updatedComment = await updateComment({
+      review_id: reviewId,
+      comment_id:commentId,
+      user_id,
+      comment_text,
+    });
+    res.status(200).json(updatedComment);
+  } catch (error) {
+    if (error.message === 'Comment not found') {
+      return res.status(404).json({ message: 'Comment not found' });
+    }
+    console.error(error); 
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
+app.delete('/api/users/:userId/favorites/:id', isLoggedIn, async (req, res, next) => {
+  try {
+    if (req.params.userId !== req.user.id) {
+      const error = Error('Not authorized');
+      error.status = 401;
+      throw error;
+    }
+
+    const id = req.params.id;
+
+    const deletedFavorite = await destroyFavorite({ user_id: req.params.userId, id });
+    console.log(deletedFavorite);
+
+    if (!deletedFavorite) {
+      return res.status(404).send({ message: 'Favorite not found' });
+    }
+
+    res.status(200).send({ message: 'Favorite deleted successfully' });
+  } catch (ex) {
+    next(ex); 
+  }
+});
+
+app.delete('/api/users/:userId/services/:serviceId/reviews/:reviewId', isLoggedIn, async (req, res, next) => {
+  const { reviewId } = req.params;
+
+  try {
+    if (req.params.userId !== req.user.id) {
+      return res.status(401).send('Not authorized to delete this review');
+    }
+
+    const response = await destroyReview(reviewId, req.user.id);
+    res.status(200).send(response);
+  } catch (ex) {
+    next(ex);
+  }
+});
+
+app.delete('/api/users/:userId/services/:serviceId/reviews/:reviewId/comments/:commentId', isLoggedIn, async (req, res, next) => {
+  const { commentId } = req.params;
+
+  try {
+    if (req.params.userId !== req.user.id) {
+      return res.status(401).send('Not authorized to delete this comment');
+    }
+
+    const response = await destroyComment(commentId, req.user.id);
+    res.status(200).send(response);
+  } catch (ex) {
+    next(ex);
+  }
+});
+
 
 // init function
 const init = async()=> {
@@ -298,16 +431,16 @@ const init = async()=> {
   const [scoobyDoo, purrfectGroomers, bugsBunnySitters, hamtaroFreud, wwwv] = await Promise.all([
     createService({ 
       name: 'Scooby Doo Night Walkers', 
-      description: 'Providing nighttime walks for your dogs',
       category_id: walker.id, 
       species_id: dog.id,
+      description: 'Providing nighttime walks for your dogs',
       image_url: 'https://cdn.britannica.com/38/233138-050-43F8C7F7/Scooby-Doo-Witchs-Ghost-promotional-art.jpg?w=300'
     }),
     createService({ 
       name: 'Purrfect Groomers', 
-      description: 'Grooming services for your kitties',
       category_id: groomer.id, 
       species_id: cat.id,
+      description: 'Grooming services for your kitties',
       image_url: 'https://assets3.thrillist.com/v1/image/3059921/1200x630/flatten;crop_down;webp=auto;jpeg_quality=70'
     }),
     createService({ 
@@ -319,16 +452,16 @@ const init = async()=> {
     }),
     createService({ 
       name: 'Hamtaro Freud', 
-      description: 'A place for hamster mental health',
       category_id: therapist.id, 
       species_id: hamster.id,
+      description: 'A place for hamster mental health',
       image_url: 'https://static.wixstatic.com/media/5be228_7f1183150cc749fabaa4ff90d6af3686~mv2.png/v1/fill/w_640,h_480,fp_0.50_0.50,q_85,usm_0.66_1.00_0.01,enc_auto/5be228_7f1183150cc749fabaa4ff90d6af3686~mv2.png'
     }),
     createService({ 
       name: 'Wild Wild West Vets', 
-      description: 'A vet specialized in reptiles and cold-blooded creatures',
       category_id: vet.id, 
       species_id: lizard.id,
+      description: 'A vet specialized in reptiles and cold-blooded creatures',
       image_url: 'https://www.huntersville.carolinavet.com/files/cvs-huntersville-avian-exotic-2.jpg'
     })
   ]);
@@ -398,9 +531,9 @@ const init = async()=> {
     createFavorite({ user_id: ozan.id, service_id: purrfectGroomers.id }),
     createFavorite({ user_id: luis.id, service_id: scoobyDoo.id }),
     createFavorite({ user_id: gui.id, service_id: wwwv.id }),
-  ])
+  ]);
 
-  const reviews = await Promise.all([
+  const [review1, review2, review3, review4, review5] = await Promise.all([
     createReview({
       user_id: mari.id,
       service_id: scoobyDoo.id,
@@ -419,7 +552,51 @@ const init = async()=> {
       rating: 5,
       review_text: 'BunBun is always well taken care of!'
     }),
+    createReview({
+      user_id: gui.id,
+      service_id: wwwv.id,
+      rating: 5,
+      review_text: 'They took great care of my lizard'
+    }),
+    createReview({
+      user_id: celdy.id,
+      service_id: hamtaroFreud.id,
+      rating: 5,
+      review_text: 'I love their therapy methods. My hamaster is smarter'
+    }),
   ]);
+
+  // Add this after creating reviews in the init function
+  const comments = await Promise.all([
+    createComment({
+      review_id: review1.id, 
+      user_id: ozan.id, 
+      comment_text: 'My dog loves the night walks too!'
+    }),
+    createComment({
+      review_id: review2.id, 
+      user_id: mari.id, 
+      comment_text: 'I agree, grooming is great but can be a bit expensive.'
+    }),
+    createComment({
+      review_id: review3.id, 
+      user_id: gui.id, 
+      comment_text: 'BunBun always comes home happy!'
+    }),
+    createComment({
+      review_id: review4.id, 
+      user_id: luis.id,
+      comment_text: 'Highly recommend this vet for lizards!'
+    }),
+    createComment({
+      review_id: review5.id, 
+      user_id: celdy.id, 
+      comment_text: 'My hamster has improved significantly!'
+    }),
+  ]);
+
+  console.log('Comments seeded:', comments);
+
 
   console.log(await fetchServices());
 
@@ -461,7 +638,7 @@ const init = async()=> {
   console.log(`curl -X GET http://localhost:3000/api/users/<userId>/favorites -H "Authorization: <token>"`);
 
   console.log(`# Create a service`);
-  console.log(`curl -X POST http://localhost:3000/api/users/services -H "Content-Type: application/json" -d '{"name": "Provider Name", "category_id": 1, "species_id": 1}'`);
+  console.log(`curl -X POST http://localhost:3000/api/services -H "Content-Type: application/json" -d '{"name": "Provider Name", "category_id": 1, "species_id": 1}'`);
 
   console.log(`# Create a pet for a user`);
   console.log(`curl -X POST http://localhost:3000/api/users/<userId>/pets -H "Content-Type: application/json" -d '{"pet_name": "Pet Name", "species_id": 1, "breed": "Breed", "age": 2, "weight": 10}'`);

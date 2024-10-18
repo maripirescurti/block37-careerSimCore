@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 
 export default function Services({ token }) {
   const [services, setServices] = useState([]);
-  // const [categories, setCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
@@ -42,7 +41,7 @@ export default function Services({ token }) {
       alert('Service added to favorites!')
     } catch (error) {
       console.error('Error adding favorite:', error);
-      alert('Failed to add favorite. Please try again.');
+      alert('Please log in or register to add favorites.');
     }
   };
 

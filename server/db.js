@@ -9,6 +9,7 @@ const JWT = process.env.JWT || 'shh2!';
 // methods
 const createTables = async() => {
   const SQL = `
+    DROP TABLE IF EXISTS comments;
     DROP TABLE IF EXISTS reviews;
     DROP TABLE IF EXISTS favorites;
     DROP TABLE IF EXISTS pets;
@@ -59,7 +60,7 @@ const createTables = async() => {
       id UUID PRIMARY KEY,
       user_id UUID REFERENCES users(id) NOT NULL,
       service_id UUID REFERENCES services(id) NOT NULL,
-      CONSTRAINT unique_favorite UNIQUE (user_id, service_id)
+      UNIQUE (user_id, service_id)
     );
     
     CREATE TABLE reviews(
@@ -68,6 +69,15 @@ const createTables = async() => {
       service_id UUID REFERENCES services(id) NOT NULL,
       rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
       review_text TEXT,
+      created_at TIMESTAMP DEFAULT NOW(),
+      UNIQUE (user_id, service_id)
+    );
+
+    CREATE TABLE comments(
+      id UUID PRIMARY KEY,
+      review_id UUID REFERENCES reviews(id) NOT NULL,
+      user_id UUID REFERENCES users(id) NOT NULL,
+      comment_text TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT NOW()
     );
   `;
@@ -80,7 +90,8 @@ const createUser = async({first_name, last_name, username, email, password}) => 
     VALUES($1, $2, $3, $4, $5, $6)
     RETURNING *
   `;
-  const response = await client.query(SQL, [uuid.v4(), first_name, last_name, username, email, await bcrypt.hash(password, 5)]);
+  const hashedPassword = await bcrypt.hash(password, 5);
+  const response = await client.query(SQL, [uuid.v4(), first_name, last_name, username, email, hashedPassword]);
   return response.rows[0];
 };
 
@@ -106,9 +117,9 @@ const createSpecies = async({ type_name }) => {
 
 const authenticate = async({ username, password}) => {
   const SQL = `
-    SELECT id, password
+    SELECT id, username, password
     FROM users
-    WHERE username = $1
+    WHERE username = $1;
   `;
   const response = await client.query(SQL, [username]);
   if(!response.rows.length || (await bcrypt.compare(password, response.rows[0].password))=== false){
@@ -120,13 +131,13 @@ const authenticate = async({ username, password}) => {
   return {token};
 }
 
-const createService = async({ name, category_id, species_id, image_url }) => {
+const createService = async({ name, category_id, species_id, description, image_url }) => {
   const SQL = `
-    INSERT INTO services(id, name, category_id, species_id, image_url)
-    VALUES($1, $2, $3, $4, $5)
+    INSERT INTO services(id, name, category_id, species_id, description, image_url)
+    VALUES($1, $2, $3, $4, $5, $6)
     RETURNING *
   `;
-  const response = await client.query(SQL, [uuid.v4(), name, category_id, species_id, image_url]);
+  const response = await client.query(SQL, [uuid.v4(), name, category_id, species_id, description, image_url]);
   return response.rows[0];
 };
 
@@ -159,6 +170,16 @@ const createReview = async({ user_id, service_id, rating, review_text }) => {
   const values = [uuid.v4(), user_id, service_id, rating, review_text];
   const { rows } = await client.query(SQL, values);
   return rows[0];
+};
+
+const createComment = async({ review_id, user_id, comment_text }) => {
+  const SQL = `
+    INSERT INTO comments (id, review_id, user_id, comment_text)
+    VALUES ($1, $2, $3, $4)
+    RETURNING *;
+  `;
+  const response = await client.query(SQL, [uuid.v4(), review_id, user_id, comment_text]);
+  return response.rows[0];
 };
 
 const fetchUsers = async() => {
@@ -261,37 +282,158 @@ const fetchReviews = async (serviceId) => {
   return rows;
 };
 
-const destroyFavorite = async(id, user_id) => {
+const fetchComments = async (reviewId) => {
+  const SQL = `
+    SELECT *
+    FROM comments
+    WHERE review_id = $1;
+  `;
+  const { rows } = await client.query(SQL, [reviewId]);
+  return rows;
+};
+
+const updatePet = async({ user_id, age, weight }) => {
+  const SQL = `
+    UPDATE pets
+    SET age = $1, weight = $2, created_at = NOW()
+    WHERE user_id = $3
+    RETURNING *;
+  `;
+  const values = [age, weight, user_id];
+  const { rows } = await client.query(SQL, values);
+
+  if (rows.length === 0) {
+    throw new Error('Review not found');
+  }
+
+  return rows[0]; 
+};
+
+const updateReview = async({ user_id, service_id, rating, review_text }) => {
+  const SQL = `
+    UPDATE reviews
+    SET rating = $1, review_text = $2, created_at = NOW()
+    WHERE user_id = $3 AND service_id = $4
+    RETURNING *;
+  `;
+  const values = [rating, review_text, user_id, service_id];
+  const { rows } = await client.query(SQL, values);
+
+  if (rows.length === 0) {
+    throw new Error('Review not found');
+  }
+
+  return rows[0]; 
+};
+
+const updateComment = async({ review_id, comment_id, user_id, comment_text }) => {
+  const SQL = `
+    UPDATE comments
+    SET comment_text = $1, created_at = NOW()
+    WHERE review_id = $2 AND id = $3 AND user_id = $4
+    RETURNING *;
+  `;
+  const values = [comment_text, review_id, comment_id, user_id];
+  const { rows } = await client.query(SQL, values);
+
+  if (rows.length === 0) {
+    throw new Error('Comment not found');
+  }
+
+  return rows[0]; 
+};
+
+const destroyFavorite = async({ user_id, id }) => {
+  console.log(user_id)
+  console.log(id)
   const SQL = `
     DELETE FROM favorites
-    WHERE id = $1 AND user_id = $2
+    WHERE user_id = $1 AND id = $2
+    RETURNING *;
   `;
-  await client.query(SQL, [id, user_id]);
-}
+  const response = await client.query(SQL, [user_id, id]);
+  return response.rows[0]; // This will return the deleted favorite if needed
+};
 
-const findUserByToken = async(token) => {
+const destroyReview = async (reviewId, userId) => {
+  const SQL = `
+    DELETE FROM reviews
+    WHERE id = $1 AND user_id = $2
+    RETURNING *;
+  `;
+  
+  try {
+    const { rowCount } = await client.query(SQL, [reviewId, userId]);
+    if (rowCount === 0) {
+      throw new Error('Review not found or not authorized to delete.');
+    }
+    return { message: 'Review deleted successfully' };
+  } catch (error) {
+    console.error('Error deleting review:', error);
+    throw new Error('Could not delete review');
+  }
+};
+
+const destroyComment = async (commentId, userId) => {
+  const SQL = `
+    DELETE FROM comments
+    WHERE id = $1 AND user_id = $2
+    RETURNING *;
+  `;
+  
+  try {
+    const { rowCount } = await client.query(SQL, [commentId, userId]);
+    if (rowCount === 0) {
+      throw new Error('Comment not found or not authorized to delete.');
+    }
+    return { message: 'Comment deleted successfully' };
+  } catch (error) {
+    console.error('Error deleting comment:', error);
+    throw new Error('Could not delete comment');
+  }
+};
+
+
+const findUserByToken = async (token) => {
   let id;
   try {
+    // Verify the token and extract the payload
     const payload = await jwt.verify(token, JWT);
-    id = payload.id;
-  } catch(ex) {
-    const error = Error('not authorized');
+    id = payload.id; // Get the user ID from the payload
+  } catch (ex) {
+    // Catch any errors during token verification
+    const error = new Error('not authorized');
     error.status = 401;
-    throw error;
+    throw error; // Propagate the error
   }
+
+  // SQL query to find the user by ID
   const SQL = `
     SELECT id, username
     FROM users
-    WHERE id = $1
+    WHERE id = $1;
   `;
-  const response = await client.query(SQL, [id]);
-  if(!response.rows.length){
-    const error = Error('not authorized');
-    error.status = 401;
-    throw error;
+
+  try {
+    // Execute the SQL query
+    const response = await client.query(SQL, [id]);
+
+    // Check if a user was found
+    if (!response.rows.length) {
+      const error = new Error('not authorized');
+      error.status = 401;
+      throw error; // Propagate the error if no user found
+    }
+
+    return response.rows[0]; // Return the found user
+  } catch (dbError) {
+    // Handle any database errors
+    console.error('Database query error:', dbError);
+    const error = new Error('database error');
+    error.status = 500; // Internal server error
+    throw error; // Propagate the error
   }
-  return response.rows[0]
-}
+};
 
 // exports
 module.exports = {
@@ -304,6 +446,7 @@ module.exports = {
   createPet,
   createFavorite,
   createReview,
+  createComment,
   fetchUsers,
   fetchCategories,
   fetchSpecies,
@@ -312,7 +455,13 @@ module.exports = {
   fetchPets,
   fetchFavorites,
   fetchReviews,
+  fetchComments,
+  updatePet,
+  updateReview,
+  updateComment,
   destroyFavorite,
+  destroyReview,
+  destroyComment,
   authenticate,
   findUserByToken
 };

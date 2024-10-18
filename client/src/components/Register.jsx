@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-export default function Register(setToken) {
-  const [firstName, setFirstname] = useState('');
+export default function Register({ setToken }) {
+  const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
@@ -19,27 +20,32 @@ export default function Register(setToken) {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ firstName, lastName, email, password }),
+        body: JSON.stringify({ firstName, lastName, username, email, password }),
       });
 
       const result = await response.json();
 
+      console.log('Response:', result);
+
+
       if (!response.ok) {
         throw new Error(result.message || 'Sign up failed.')
       }
-
+      
       setToken(result.token);
       setSuccessMessage('Registration successful! You can now log in.')
       setError(null);
 
       setFirstName('');
       setLastName('');
+      setUsername('');
       setEmail('');
       setPassword('');
 
-      navigate('/login');
+      // navigate('/login');
 
     } catch (error) {
+      console.error('Error:', error);
       setError(error.message);
       setSuccessMessage('');
     }
@@ -54,27 +60,34 @@ export default function Register(setToken) {
       <form onSubmit={handleSubmit}>
         <label>
           First Name: <input
-          value={firstName}
-          placeholder="First Name"
-          onChange={(e) => setFirstname(e.target.value)} />
+            value={firstName}
+            placeholder="First Name"
+            onChange={(e) => setFirstName(e.target.value)} />
         </label>
         <label>
           Last Name: <input
-          value={lastName}
-          placeholder="Last Name"
-          onChange={(e) => setLastName(e.target.value)} />
+            value={lastName}
+            placeholder="Last Name"
+            onChange={(e) => setLastName(e.target.value)} />
+        </label>
+        <label>
+          Username: <input
+            value={username}
+            placeholder="Username"
+            onChange={(e) => setUsername(e.target.value)} />
         </label>
         <label>
           Email: <input
-          value={email}
-          placeholder="Email"
-          onChange={(e) => setEmail(e.target.value)} />
+            value={email}
+            placeholder="Email"
+            onChange={(e) => setEmail(e.target.value)} />
         </label>
         <label>
           Password: <input
-          value={password}
-          placeholder="Password"
-          onChange={(e) => setPassword(e.target.value)} />
+            type="password"
+            value={password}
+            placeholder="Password"
+            onChange={(e) => setPassword(e.target.value)} />
         </label>
         <button>Submit</button>
       </form>
