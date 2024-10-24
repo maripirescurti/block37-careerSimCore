@@ -84,6 +84,44 @@ export const addFavorite = async (userId, serviceId, token) => {
   return response.json();
 };
 
+export const addReview = async (serviceId, userId, rating, reviewText, token) => {
+  const response = await fetch(`http://localhost:3000/api/users/${userId}/services/${serviceId}/reviews`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ rating, review_text: reviewText }),
+  });
+
+  if (!response.ok) {
+    const errorJson = await response.json();
+    console.error('Error adding review:', errorJson);
+    throw new Error(errorJson.message);
+  }
+
+  return response.json();
+};
+
+export const updateReview = async (userId, serviceId, rating, reviewText, token) => {
+  const response = await fetch(`http://localhost:3000/api/users/${userId}/services/${serviceId}/reviews`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ rating, review_text: reviewText }),
+  });
+
+  if (!response.ok) {
+    const errorJson = await response.json();
+    console.error('Error updating review:', errorJson);
+    throw new Error(errorJson.message);
+  }
+
+  return response.json();
+};
+
 export const removeFavorite = async (userId, favoriteId, token) => {
   const response = await fetch(`http://localhost:3000/api/users/${userId}/favorites/${favoriteId}`, {
     method: 'DELETE',

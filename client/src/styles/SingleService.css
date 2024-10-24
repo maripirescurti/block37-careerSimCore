@@ -60,7 +60,7 @@
   color: red;
 }
 
-/* Back Button */
+/* Back Button & Add Review Button */
 .back-button {
   background-color: #4bc7f4;
   color: white;
@@ -74,4 +74,19 @@
 
 .back-button:hover {
   background-color: #007bb5;
+}
+
+/* Review Form */
+.review-form {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+textarea {
+  resize: none;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
 }
