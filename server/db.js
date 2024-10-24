@@ -11,6 +11,7 @@ const createTables = async() => {
   const SQL = `
     DROP TABLE IF EXISTS comments;
     DROP TABLE IF EXISTS reviews;
+    DROP TABLE IF EXISTS appointments;
     DROP TABLE IF EXISTS favorites;
     DROP TABLE IF EXISTS pets;
     DROP TABLE IF EXISTS services;
@@ -53,7 +54,9 @@ const createTables = async() => {
       species_id UUID REFERENCES species(id) NOT NULL,
       breed VARCHAR(100),
       age INTEGER,
-      weight INTEGER
+      weight INTEGER,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
     );
 
     CREATE TABLE favorites(
@@ -61,6 +64,16 @@ const createTables = async() => {
       user_id UUID REFERENCES users(id) NOT NULL,
       service_id UUID REFERENCES services(id) NOT NULL,
       UNIQUE (user_id, service_id)
+    );
+    
+    CREATE TABLE appointments(
+      id UUID PRIMARY KEY,
+      user_id UUID REFERENCES users(id) NOT NULL,
+      service_id UUID REFERENCES services(id) NOT NULL,
+      appointment_date TIMESTAMP NOT NULL,
+      status VARCHAR(50) DEFAULT 'pending',
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
     );
     
     CREATE TABLE reviews(
@@ -159,6 +172,18 @@ const createFavorite = async({ user_id, service_id }) => {
   `;
   const response = await client.query(SQL, [uuid.v4(), user_id, service_id]);
   return response.rows[0];
+};
+
+const createAppointment = async({ user_id, service_id, appointment_date }) => {
+  const SQL = `
+    INSERT INTO appointments(id, user_id, service_id, appointment_date)
+    VALUES($1, $2, $3, $4)
+    RETURNING *;
+  `;
+  const values = [uuid.v4(), user_id, service_id, appointment_date];
+
+  const { rows } = await client.query(SQL, values);
+  return rows[0];
 };
 
 const createReview = async({ user_id, service_id, rating, review_text }) => {
@@ -272,6 +297,18 @@ const fetchFavorites = async(user_id) => {
   return response.rows;
 }
 
+const fetchAppointments = async (user_id) => {
+  const SQL = `
+    SELECT appointments.*, services.name AS service_name, users.username AS user_name
+    FROM appointments
+    JOIN services ON appointments.service_id = services.id
+    JOIN users ON appointments.user_id = users.id
+    WHERE appointments.user_id = $1;
+  `;
+  const { rows } = await client.query(SQL, [user_id]);
+  return rows;
+};
+
 const fetchReviews = async (serviceId) => {
   const SQL = `
     SELECT *
@@ -292,21 +329,66 @@ const fetchComments = async (reviewId) => {
   return rows;
 };
 
-const updatePet = async({ user_id, age, weight }) => {
+const updatePet = async({ user_id, pet_id, age, weight }) => {
+  let updates = [];
+  let values = [];
+  let index = 1;
+
+  if (age !== undefined) {
+    updates.push(`age = $${index++}`);
+    values.push(age);
+  }
+  if (weight !== undefined) {
+    updates.push(`weight = $${index++}`);
+    values.push(weight);
+  }
+
+  values.push(user_id, pet_id);
+
   const SQL = `
     UPDATE pets
-    SET age = $1, weight = $2, created_at = NOW()
-    WHERE user_id = $3
+    SET ${updates.join(', ')}, updated_at = NOW()
+    WHERE user_id = $${index++} AND id = $${index}
     RETURNING *;
   `;
-  const values = [age, weight, user_id];
+
   const { rows } = await client.query(SQL, values);
 
   if (rows.length === 0) {
-    throw new Error('Review not found');
+    throw new Error('Pet not found');
   }
 
   return rows[0]; 
+};
+
+const updateAppointment = async ({ appointment_id, status, appointment_date }) => {
+  let updates = [];
+  let values = [];
+  let index = 1;
+
+  if (status) {
+    updates.push(`status = $${index++}`);
+    values.push(status);
+  }
+  if (appointment_date) {
+    updates.push(`appointment_date = $${index++}`);
+    values.push(appointment_date);
+  }
+
+  values.push(appointment_id);
+
+  const SQL = `
+    UPDATE appointments
+    SET ${updates.join(', ')}, updated_at = NOW()
+    WHERE id = $${index}
+    RETURNING *;
+  `;
+
+  const { rows } = await client.query(SQL, values);
+  if (rows.length === 0) {
+    throw new Error('Appointment not found');
+  }
+  return rows[0];
 };
 
 const updateReview = async({ user_id, service_id, rating, review_text }) => {
@@ -353,6 +435,19 @@ const destroyFavorite = async({ user_id, id }) => {
   `;
   const response = await client.query(SQL, [user_id, id]);
   return response.rows[0]; // This will return the deleted favorite if needed
+};
+
+const destroyAppointment = async (appointment_id) => {
+  const SQL = `
+    DELETE FROM appointments
+    WHERE id = $1
+    RETURNING *;
+  `;
+  const { rows } = await client.query(SQL, [appointment_id]);
+  if (rows.length === 0) {
+    throw new Error('Appointment not found');
+  }
+  return rows[0];
 };
 
 const destroyReview = async (reviewId, userId) => {
@@ -445,6 +540,7 @@ module.exports = {
   createService,
   createPet,
   createFavorite,
+  createAppointment,
   createReview,
   createComment,
   fetchUsers,
@@ -454,12 +550,15 @@ module.exports = {
   fetchSingleService,
   fetchPets,
   fetchFavorites,
+  fetchAppointments,
   fetchReviews,
   fetchComments,
   updatePet,
+  updateAppointment,
   updateReview,
   updateComment,
   destroyFavorite,
+  destroyAppointment,
   destroyReview,
   destroyComment,
   authenticate,

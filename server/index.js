@@ -8,6 +8,7 @@ const {
   createService,
   createPet,
   createFavorite,
+  createAppointment,
   createReview,
   createComment,
   fetchUsers,
@@ -17,12 +18,15 @@ const {
   fetchSingleService,
   fetchPets,
   fetchFavorites,
+  fetchAppointments,
   fetchReviews,
   fetchComments,
   updatePet,
+  updateAppointment,
   updateReview,
   updateComment,
   destroyFavorite,
+  destroyAppointment,
   destroyReview,
   destroyComment,
   authenticate,
@@ -188,6 +192,20 @@ app.get('/api/users/:id/favorites', isLoggedIn, async(req, res, next) => {
   }
 });
 
+app.get('/api/users/:userId/appointments', isLoggedIn, async (req, res, next) => {
+  try {
+    if (req.params.userId !== req.user.id) {
+      const error = new Error('Not authorized');
+      error.status = 401;
+      throw error;
+    }
+    const appointments = await fetchAppointments(req.params.userId);
+    res.status(200).json(appointments);
+  } catch (error) {
+    next(error);
+  }
+});
+
 // CREATE
 app.post('/api/services', async(req, res, next) => {
   try {
@@ -238,6 +256,30 @@ app.post('/api/users/:id/favorites', isLoggedIn, async(req, res, next) => {
   }
 });
 
+app.post('/api/users/:userId/services/:serviceId/appointments', isLoggedIn, async(req, res, next) => {
+  const { userId, serviceId } = req.params;
+  const { appointment_date } = req.body;
+  
+  try {
+    if(userId !== req.user.id){
+      const error = new Error('Not authorized');
+      error.status = 401;
+      throw error;
+    }
+
+    const appointment = await createAppointment({
+      user_id: userId,
+      service_id: serviceId,
+      appointment_date,
+    });
+
+    res.status(201).json(appointment);
+  } catch(error) {
+    console.error(error);
+    next(error);sl
+  }
+});
+
 app.post('/api/users/:userId/services/:serviceId/reviews', isLoggedIn, async(req, res, next) => {
   try {
     if (req.params.userId !== req.user.id) {
@@ -278,21 +320,54 @@ app.post('/api/users/:userId/services/:serviceId/reviews/:reviewId/comments', is
 // UPDATE
 app.put('/api/users/:userId/pets/:id', isLoggedIn, async (req, res, next) => {
   const { age, weight } = req.body;
-  const user_id = req.user.id;
+  const { userId, id: pet_id} = req.params;
+
+  if (!age && !weight) {
+    return res.status(400).json({ message: 'Age or weight must be provided'});
+  }
 
   try {
+
+    if (userId !== req.user.id) {
+      const error = new Error ('Not authorized');
+      error.status = 401;
+      throw error;
+    }
+
     const updatedPet = await updatePet({
-      user_id,
+      user_id: userId,
+      pet_id,
       age,
-      weight
+      weight,
     });
+
     res.status(200).json(updatedPet);
   } catch (error) {
-    if (error.message === 'Pet not found') {
-      return res.status(404).json({ message: 'Pet not found' });
-    }
     console.error(error); 
+    if (error.message === 'Pet not found') {
+      res.status(404).json({ message: 'Pet not found'});
+    }
     res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+app.put('/api/appointments/:appointmentId', isLoggedIn, async (req, res, next) => {
+  const { appointmentId } = req.params;
+  const { status, appointment_date } = req.body;
+
+  try {
+    const updatedAppointment = await updateAppointment({
+      appointment_id: appointmentId,
+      status,
+      appointment_date,
+    });
+
+    res.status(200).json(updatedAppointment);
+  } catch (error) {
+    if (error.message === 'Appointment not found') {
+      return res.status(404).json({ message: 'Appointment not found' });
+    }
+    next(error);
   }
 });
 
@@ -340,6 +415,21 @@ app.put('/api/users/:userId/services/:serviceId/reviews/:reviewId/comments/:comm
   }
 });
 
+// DELETE
+
+app.delete('/api/appointments/:appointmentId', isLoggedIn, async (req, res, next) => {
+  const { appointmentId } = req.params;
+
+  try {
+    const deletedAppointment = await destroyAppointment(appointmentId);
+    res.status(200).json(deletedAppointment);
+  } catch (error) {
+    if (error.message === 'Appointment not found') {
+      return res.status(404).json({ message: 'Appointment not found' });
+    }
+    next(error);
+  }
+});
 
 app.delete('/api/users/:userId/favorites/:id', isLoggedIn, async (req, res, next) => {
   try {
@@ -533,6 +623,24 @@ const init = async()=> {
     createFavorite({ user_id: gui.id, service_id: wwwv.id }),
   ]);
 
+  const appointments = await Promise.all([
+    createAppointment ({
+      user_id: mari.id,
+      service_id: scoobyDoo.id,
+      appointment_date: '2024-11-01T10:00:00'
+    }),
+    createAppointment ({
+      user_id: ozan.id,
+      service_id: purrfectGroomers.id,
+      appointment_date: '2024-11-05T14:00:00'
+    }),
+    createAppointment ({
+      user_id: gui.id,
+      service_id: wwwv.id,
+      appointment_date: '2024-11-10T09:00:00'
+    }),
+  ])
+
   const [review1, review2, review3, review4, review5] = await Promise.all([
     createReview({
       user_id: mari.id,
@@ -611,62 +719,108 @@ const init = async()=> {
   console.log(`\n# CURL commands to test the routes:\n`);
 
   console.log(`# User login`);
-  console.log(`curl -X POST http://localhost:3000/api/auth/login -H "Content-Type: application/json" -d '{"username": "maricurti", "password": "shh2!"}'`);
+  console.log(`curl -X POST http://localhost:3000/api/auth/login \\
+    -H "Content-Type: application/json" \\
+    -d '{"username": "maricurti", "password": "shh2!"}'`);
 
-  console.log(`# User register`);
-  console.log(`curl -X POST http://localhost:3000/api/auth/register \
-    -H "Content-Type: application/json" \
+  console.log(`# User registration`);
+  console.log(`curl -X POST http://localhost:3000/api/auth/register \\
+    -H "Content-Type: application/json" \\
     -d '{
       "first_name": "John",
       "last_name": "Doe",
       "username": "johndoe",
       "email": "johndoe@example.com",
       "password": "yourSecurePassword"
-    }'
-  `);
+    }'`);
 
   console.log(`# Get logged-in user details`);
-  console.log(`curl -X GET http://localhost:3000/api/auth/me -H "Authorization: <token>"`);
+  console.log(`curl -X GET http://localhost:3000/api/auth/me \\
+    -H "Authorization: Bearer <token>"`);
 
   console.log(`# Get all users`);
   console.log(`curl -X GET http://localhost:3000/api/users`);
 
   console.log(`# Get pets for a specific user`);
-  console.log(`curl -X GET http://localhost:3000/api/users/<userId>/pets -H "Authorization: <token>"`);
+  console.log(`curl -X GET http://localhost:3000/api/users/<userId>/pets \\
+    -H "Authorization: Bearer <token>"`);
 
   console.log(`# Get favorites for a specific user`);
-  console.log(`curl -X GET http://localhost:3000/api/users/<userId>/favorites -H "Authorization: <token>"`);
+  console.log(`curl -X GET http://localhost:3000/api/users/<userId>/favorites \\
+    -H "Authorization: Bearer <token>"`);
 
   console.log(`# Create a service`);
-  console.log(`curl -X POST http://localhost:3000/api/services -H "Content-Type: application/json" -d '{"name": "Provider Name", "category_id": 1, "species_id": 1}'`);
+  console.log(`curl -X POST http://localhost:3000/api/services \\
+    -H "Content-Type: application/json" \\
+    -d '{
+      "name": "Provider Name",
+      "category_id": "1",
+      "species_id": "1",
+      "description": "Service description",
+      "image_url": "http://example.com/image.jpg"
+    }'`);
 
   console.log(`# Create a pet for a user`);
-  console.log(`curl -X POST http://localhost:3000/api/users/<userId>/pets -H "Content-Type: application/json" -d '{"pet_name": "Pet Name", "species_id": 1, "breed": "Breed", "age": 2, "weight": 10}'`);
+  console.log(`curl -X POST http://localhost:3000/api/users/<userId>/pets \\
+    -H "Authorization: Bearer <token>" \\
+    -H "Content-Type: application/json" \\
+    -d '{
+      "pet_name": "Pet Name",
+      "species_id": "1",
+      "breed": "Breed",
+      "age": 2,
+      "weight": 10
+    }'`);
 
-  console.log(`# Create a favorite for a user`);
-  console.log(`curl -X POST http://localhost:3000/api/users/<userId>/favorites -H "Content-Type: application/json" -d '{"service_id": 1}'`);
+  console.log(`# Create an appointment for a user`);
+  console.log(`curl -X POST http://localhost:3000/api/users/<userId>/services/<serviceId>/appointments \\
+    -H "Authorization: Bearer <token>" \\
+    -H "Content-Type: application/json" \\
+    -d '{
+      "appointment_date": "2024-11-01T10:00:00"
+    }'`);
+
+  console.log(`# Get appointments for a user`);
+  console.log(`curl -X GET http://localhost:3000/api/users/<userId>/appointments \\
+    -H "Authorization: Bearer <token>"`);
+
+  console.log(`# Update an appointment`);
+  console.log(`curl -X PUT http://localhost:3000/api/appointments/<appointmentId> \\
+    -H "Authorization: Bearer <token>" \\
+    -H "Content-Type: application/json" \\
+    -d '{
+      "status": "confirmed",
+      "appointment_date": "2024-11-05T14:00:00"
+    }'`);
+
+  console.log(`# Delete an appointment`);
+  console.log(`curl -X DELETE http://localhost:3000/api/appointments/<appointmentId> \\
+    -H "Authorization: Bearer <token>"`);
 
   console.log(`# Create a review for a service`);
-  console.log(`curl -X POST http://localhost:3000/api/users/<userId>/services/<serviceId>/reviews -H "Content-Type: application/json" -d '{"rating": 5, "review_text": "Great service!"}'`);
+  console.log(`curl -X POST http://localhost:3000/api/users/<userId>/services/<serviceId>/reviews \\
+    -H "Authorization: Bearer <token>" \\
+    -H "Content-Type: application/json" \\
+    -d '{
+      "rating": 5,
+      "review_text": "Great service!"
+    }'`);
 
-  console.log(`# Delete a favorite`);
-  console.log(`curl -X DELETE http://localhost:3000/api/users/<userId>/favorites/<favoriteId> -H "Authorization: <token>"`);
+  console.log(`# Get reviews for a service`);
+  console.log(`curl -X GET http://localhost:3000/api/services/<serviceId>/reviews`);
 
-  console.log(`# Get service categories`);
-  console.log(`curl -X GET http://localhost:3000/api/categories`);
+  console.log(`# Update a pet`);
+  console.log(`curl -X PUT http://localhost:3000/api/users/<userId>/pets/<petId> \\
+    -H "Authorization: Bearer <token>" \\
+    -H "Content-Type: application/json" \\
+    -d '{
+      "age": 3,
+      "weight": 12
+    }'`);
 
-  console.log(`# Get pet types`);
-  console.log(`curl -X GET http://localhost:3000/api/species`);
-
-  console.log(`# Get service`);
-  console.log(`curl -X GET http://localhost:3000/api/services`);
-  
-  console.log(`# Get single service`);
-  console.log(`curl -X GET http://localhost:3000/api/services/<serviceId>`);
-  
-  console.log(`# Get service image url`);
-  console.log(`curl -X POST http://localhost:3000/api/users/services -H "Content-Type: application/json" -d '{"name": "Provider Name", "category_id": "1", "species_id": "1", "image_url": "http://example.com/image.jpg"}'`);
-
+  console.log(`# Delete a review`);
+  console.log(`curl -X DELETE http://localhost:3000/api/users/<userId>/services/<serviceId>/reviews/<reviewId> \\
+    -H "Authorization: Bearer <token>"`);
   // express listen to port 3000
   const port = process.env.PORT || 3000;
   app.listen(port, () => console.log(`listening on port ${port}`));
