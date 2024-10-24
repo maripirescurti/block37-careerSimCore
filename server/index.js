@@ -638,7 +638,7 @@ const init = async()=> {
       user_id: gui.id,
       service_id: wwwv.id,
       appointment_date: '2024-11-10T09:00:00'
-    }),
+    })
   ])
 
   const [review1, review2, review3, review4, review5] = await Promise.all([
