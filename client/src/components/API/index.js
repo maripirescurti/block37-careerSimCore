@@ -1,5 +1,49 @@
 const API_URL = 'http://localhost:3000/api';
 
+export const loginUser = async (username, password) => {
+  const response = await fetch(`${API_URL}/auth/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ username, password }),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    console.error('Error logging in:', result);
+    throw new Error(result.message || 'Login failed.');
+  }
+
+  return result;
+};
+
+export const registerUser = async (first_name, last_name, username, email, password) => {
+  const response = await fetch(`${API_URL}/auth/register`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ 
+      first_name, 
+      last_name, 
+      username, 
+      email, 
+      password 
+    }),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    console.error('Error registering user:', result);
+    throw new Error(result.message || 'Sign up failed.');
+  }
+
+  return result;
+};
+
 export const fetchServices = async () => {
   const response = await fetch(`${API_URL}/services`);
 

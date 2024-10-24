@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { registerUser, loginUser } from "./API";
 
 export default function Register({ setToken }) {
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [first_name, setFirstName] = useState('');
+  const [last_name, setLastName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -15,35 +16,27 @@ export default function Register({ setToken }) {
     event.preventDefault();
 
     try {
-      const response = await fetch('http://localhost:3000/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ firstName, lastName, username, email, password }),
-      });
+      // Register the user
+      await registerUser(first_name, last_name, username, email, password);
 
-      const result = await response.json();
+      // Automatically log in the user
+      const loginResult = await loginUser(username, password);
 
-      console.log('Response:', result);
+      console.log('Login Response:', loginResult);
 
-
-      if (!response.ok) {
-        throw new Error(result.message || 'Sign up failed.')
-      }
-      
-      setToken(result.token);
-      setSuccessMessage('Registration successful! You can now log in.')
+      setToken(loginResult.token);
+      setSuccessMessage('Registration successful! You are now logged in.');
       setError(null);
 
+      // Reset form
       setFirstName('');
       setLastName('');
       setUsername('');
       setEmail('');
       setPassword('');
 
-      // navigate('/login');
-
+      // Navigate to the home page or user dashboard
+      navigate('/');
     } catch (error) {
       console.error('Error:', error);
       setError(error.message);
@@ -59,41 +52,52 @@ export default function Register({ setToken }) {
 
       <form onSubmit={handleSubmit}>
         <label>
-          First Name: <input
-            value={firstName}
+          First Name: 
+          <input
+            value={first_name}
             placeholder="First Name"
-            onChange={(e) => setFirstName(e.target.value)} />
+            onChange={(e) => setFirstName(e.target.value)}
+          />
         </label>
         <label>
-          Last Name: <input
-            value={lastName}
+          Last Name: 
+          <input
+            value={last_name}
             placeholder="Last Name"
-            onChange={(e) => setLastName(e.target.value)} />
+            onChange={(e) => setLastName(e.target.value)}
+          />
         </label>
         <label>
-          Username: <input
+          Username: 
+          <input
             value={username}
             placeholder="Username"
-            onChange={(e) => setUsername(e.target.value)} />
+            onChange={(e) => setUsername(e.target.value)}
+          />
         </label>
         <label>
-          Email: <input
+          Email: 
+          <input
             value={email}
             placeholder="Email"
-            onChange={(e) => setEmail(e.target.value)} />
+            onChange={(e) => setEmail(e.target.value)}
+          />
         </label>
         <label>
-          Password: <input
+          Password: 
+          <input
             type="password"
             value={password}
             placeholder="Password"
-            onChange={(e) => setPassword(e.target.value)} />
+            onChange={(e) => setPassword(e.target.value)}
+          />
         </label>
-        <button>Submit</button>
+        <button type="submit">Submit</button>
       </form>
+
       <p>
         Already have an account? <a href="/login">Sign in here!</a>
       </p>
     </>
-  )
+  );
 }
