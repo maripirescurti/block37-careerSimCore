@@ -98,6 +98,22 @@ export const fetchFavorites = async (userId, token) => {
   return response.json();
 };
 
+export const fetchUserPets = async (userId, token) => {
+  const response = await fetch(`${API_URL}/users/${userId}/pets`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorJson = await response.json();
+    console.error('Error fetching pets:', errorJson);
+    throw new Error(errorJson.message);
+  }
+  return response.json();
+};
+
+
 export const fetchReviewsByService = async (serviceId) => {
   const response = await fetch(`${API_URL}/services/${serviceId}/reviews`);
   if (response.ok) {
@@ -108,6 +124,24 @@ export const fetchReviewsByService = async (serviceId) => {
     console.error('Error fetching reviews:', errorJson);
     throw new Error('Failed to fetch reviews');
   }
+};
+
+
+export const addPet = async (userId, petData, token) => {
+  const response = await fetch(`${API_URL}/users/${userId}/pets`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(petData),
+  });
+
+  const result = await response.json();
+  if (!response.ok) {
+    throw new Error(result.message || 'Failed to add pet');
+  }
+  return result;
 };
 
 export const addFavorite = async (userId, serviceId, token) => {
@@ -169,6 +203,25 @@ export const addComment = async (reviewId, userId, serviceId, commentText, token
 
   return response.json();
 };
+
+
+export const updatePet = async (userId, petId, updatedData, token) => {
+  const response = await fetch(`${API_URL}/users/${userId}/pets/${petId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(updatedData),
+  });
+
+  const result = await response.json();
+  if (!response.ok) {
+    throw new Error(result.message || 'Failed to update pet');
+  }
+  return result;
+};
+
 
 export const fetchCommentsByReview = async (reviewId) => {
   const response = await fetch(`http://localhost:3000/api/services/reviews/${reviewId}/comments`);
