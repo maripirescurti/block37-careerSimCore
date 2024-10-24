@@ -1,66 +1,39 @@
-import React from "react";
-import { NavLink, useNavigate } from "react-router-dom";
-import "../styles//NavBar.css";
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import '../styles/NavBar.css';
 
-export default function NavBar({ isLoggedIn, setToken }) {
-  const navigate = useNavigate();
+export default function NavBar() {
+  const [isOpen, setIsOpen] = useState(false);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    setToken(null);
-    navigate('/login');
+  const toggleMenu = () => {
+    setIsOpen(!isOpen);
   };
 
   return (
     <nav className="navbar">
-      <div className="navbar-title">
-        <h3>Your Pet Is My Boss</h3>
+      <div className="navbar-title">Your Pet is My Boss!</div>
+
+      {/* Hamburger Icon */}
+      <div className="hamburger" onClick={toggleMenu}>
+        <div className={`bar ${isOpen ? 'open-bar1' : ''}`}></div>
+        <div className={`bar ${isOpen ? 'open-bar2' : ''}`}></div>
+        <div className={`bar ${isOpen ? 'open-bar3' : ''}`}></div>
       </div>
-      <ul className="navbar-links">
+
+      {/* Dropdown Menu */}
+      <ul className={`navbar-links ${isOpen ? 'active' : ''}`}>
         <li>
-          <NavLink 
-            to="/" 
-            className={({ isActive }) => isActive ? "active-link" : ""}
-          >
-            Home
-          </NavLink>
+          <Link to="/" onClick={toggleMenu}>Home</Link>
         </li>
-        {!isLoggedIn ? (
-          <>
-            <li>
-              <NavLink 
-                to="/login" 
-                className={({ isActive }) => isActive ? "active-link" : ""}
-              >
-                Login
-              </NavLink>
-            </li>
-            <li>
-              <NavLink 
-                to="/register" 
-                className={({ isActive }) => isActive ? "active-link" : ""}
-              >
-                Register
-              </NavLink>
-            </li>
-          </>
-        ) : (
-          <>
-            <li>
-              <NavLink 
-                to="/account" 
-                className={({ isActive }) => isActive ? "active-link" : ""}
-              >
-                Account
-              </NavLink>
-            </li>
-            <li>
-              <button onClick={handleLogout} className="logout-button">
-                Logout
-              </button>
-            </li>
-          </>
-        )}
+        <li>
+          <Link to="/login" onClick={toggleMenu}>Login</Link>
+        </li>
+        <li>
+          <Link to="/register" onClick={toggleMenu}>Register</Link>
+        </li>
+        <li>
+          <Link to="/account" onClick={toggleMenu}>Account</Link>
+        </li>
       </ul>
     </nav>
   );

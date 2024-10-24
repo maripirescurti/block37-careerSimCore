@@ -89,6 +89,7 @@ export default function Services({ token }) {
   return (
     <div className="services-container">
       <h2>Your Pet is my Boss!!!</h2>
+      <p>Find your service here!</p>
       <input
         type="text"
         placeholder="Search services by category"

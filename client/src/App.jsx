@@ -6,6 +6,7 @@ import SingleService from './components/SingleService.jsx';
 import Register from './components/Register.jsx';
 import Login from './components/Login.jsx';
 import Account from './components/Account.jsx';
+import './index.css'
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('token') || null);
