@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { loginUser } from "./API"; // Import the API call
 
-export default function Login({setToken, setEmail }) {
+export default function Login({ setToken, setEmail }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
@@ -13,40 +14,27 @@ export default function Login({setToken, setEmail }) {
     event.preventDefault();
 
     try {
-      const response = await fetch('http://localhost:3000/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
+      const result = await loginUser(username, password);
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || 'Log in failed.')
-      }
-
+      // Store token and email in local state and localStorage
       setToken(result.token);
       setEmail(result.email);
-      setSuccessMessage("Login successful!");
-      setIsLoggedIn(true);
-
-      // store token so keeps user logged in
       localStorage.setItem('token', result.token);
       localStorage.setItem('email', result.email);
 
-      // clear inputs
-      setUsername('');
-      setPassword('');
+      setSuccessMessage("Login successful!");
+      setIsLoggedIn(true);
       setError(null);
 
-
+      // Clear input fields
+      setUsername('');
+      setPassword('');
     } catch (error) {
+      console.error("Login error:", error);
       setError(error.message);
       setSuccessMessage('');
     }
-  };
+  }
 
   return (
     <>
@@ -63,23 +51,25 @@ export default function Login({setToken, setEmail }) {
           </p>
         </div>
       )}
-      {!isLoggedIn && ( 
+      {!isLoggedIn && (
         <form onSubmit={handleSubmit}>
           <label>
-            Username: <input 
-            type="text" 
-            placeholder="Username"
-            value={username} 
-            onChange={(e) => setUsername(e.target.value)} 
-          />
+            Username:
+            <input
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
           </label>
           <label>
-            Password: <input 
-            type="password" 
-            placeholder="Password"
-            value={password} 
-            onChange={(e) => setPassword(e.target.value)} 
-          />
+            Password:
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </label>
           <button type="submit">Login</button>
         </form>

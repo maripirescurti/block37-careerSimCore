@@ -148,6 +148,40 @@ export const addReview = async (serviceId, userId, rating, reviewText, token) =>
   return response.json();
 };
 
+export const addComment = async (reviewId, userId, serviceId, commentText, token) => {
+  const response = await fetch(
+    `http://localhost:3000/api/users/${userId}/services/${serviceId}/reviews/${reviewId}/comments`, 
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ comment_text: commentText }),
+    }
+  );
+
+  if (!response.ok) {
+    const errorJson = await response.json();
+    console.error('Error adding comment:', errorJson);
+    throw new Error(errorJson.message || 'Failed to add comment.');
+  }
+
+  return response.json();
+};
+
+export const fetchCommentsByReview = async (reviewId) => {
+  const response = await fetch(`http://localhost:3000/api/services/reviews/${reviewId}/comments`);
+  
+  if (!response.ok) {
+    const errorJson = await response.json();
+    console.error('Error fetching comments:', errorJson);
+    throw new Error(errorJson.message || 'Failed to fetch comments.');
+  }
+
+  return response.json();
+};
+
 export const updateReview = async (userId, serviceId, rating, reviewText, token) => {
   const response = await fetch(`${API_URL}/users/${userId}/services/${serviceId}/reviews`, {
     method: 'PUT',
