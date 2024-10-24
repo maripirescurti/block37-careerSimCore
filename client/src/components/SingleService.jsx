@@ -15,18 +15,20 @@ export default function SingleService({ token }) {
   const [favorites, setFavorites] = useState([]);
   const [reviewText, setReviewText] = useState("");
   const [rating, setRating] = useState(0);
-  const [userReview, setUserReview] = useState(null);
-  const [isReviewFormVisible, setIsReviewFormVisible] = useState(false);
+  const [userReviewed, setUserReviewed] = useState(false); // Track if user already reviewed
+  const [isFormVisible, setIsFormVisible] = useState(false);
   const navigate = useNavigate();
-  const userId = token ? JSON.parse(atob(token.split(".")[1])).id : null;
+  const userId = token ? JSON.parse(atob(token.split('.')[1])).id : null;
 
   useEffect(() => {
     const fetchSingleService = async () => {
       try {
         const data = await fetchServiceById(id);
         setService(data);
-        const existingReview = data.reviews.find((review) => review.user_id === userId);
-        setUserReview(existingReview);
+
+        // Check if user already reviewed this service
+        const userReview = data.reviews.find(review => review.user_id === userId);
+        if (userReview) setUserReviewed(true);
       } catch (error) {
         console.error("Error fetching service:", error);
       }
@@ -56,12 +58,11 @@ export default function SingleService({ token }) {
       return;
     }
 
-    const favorite = favorites.find((fav) => fav.service_id === id);
-
+    const favorite = favorites.find(fav => fav.service_id === id);
     try {
       if (favorite) {
         await removeFavorite(userId, favorite.id, token);
-        setFavorites(favorites.filter((fav) => fav.service_id !== id));
+        setFavorites(favorites.filter(fav => fav.service_id !== id));
       } else {
         const newFavorite = await addFavorite(userId, id, token);
         setFavorites([...favorites, newFavorite]);
@@ -72,28 +73,26 @@ export default function SingleService({ token }) {
     }
   };
 
-  const handleAddReview = async (e) => {
+  const handleReviewSubmit = async (e) => {
     e.preventDefault();
-    if (userReview) {
-      alert("You can only make one review. Please update your existing review.");
+    if (!token) {
+      alert("Log in or register to submit a review!");
       return;
     }
-
     try {
       const newReview = await addReview(id, userId, rating, reviewText, token);
       setService({ ...service, reviews: [...service.reviews, newReview] });
-      setReviewText("");
-      setRating(0);
-      setIsReviewFormVisible(false);
       alert("Review submitted successfully!");
+      setIsFormVisible(false);
+      setUserReviewed(true); // Mark that the user has reviewed
     } catch (error) {
       console.error("Error submitting review:", error);
       alert("Failed to submit review.");
     }
   };
 
-  const renderStars = (currentRating) => {
-    return [...Array(5)].map((_, index) => (
+  const renderStars = (currentRating) =>
+    [...Array(5)].map((_, index) => (
       <span
         key={index}
         onClick={() => setRating(index + 1)}
@@ -102,7 +101,6 @@ export default function SingleService({ token }) {
         ★
       </span>
     ));
-  };
 
   if (!service) return <p>Loading...</p>;
 
@@ -125,41 +123,42 @@ export default function SingleService({ token }) {
       <p>{service.description}</p>
 
       {/* Add Review Button */}
-      {token ? (
-        <>
-          <button 
-            onClick={() => setIsReviewFormVisible(!isReviewFormVisible)}
-            className="back-button"
-          >
-            {userReview ? "Update Your Review" : "Add Review"}
-          </button>
-          {isReviewFormVisible && (
-            <form onSubmit={handleAddReview} className="review-form">
-              <div>{renderStars(rating)}</div>
-              <textarea
-                value={reviewText}
-                onChange={(e) => setReviewText(e.target.value)}
-                placeholder="Write your review"
-                required
-              />
-              <button type="submit" className="back-button">Submit</button>
-            </form>
-          )}
-        </>
+      {token && !userReviewed ? (
+        <button 
+          onClick={() => setIsFormVisible(!isFormVisible)}
+          className="back-button"
+        >
+          Add Review
+        </button>
       ) : (
-        <div>
-          <p>Login or Register to submit your review!</p>
-          <button onClick={() => navigate("/login")} className="back-button">
-            Login
+        <p>You’ve already reviewed this service.</p>
+      )}
+
+      {/* Review Form */}
+      {isFormVisible && (
+        <form onSubmit={handleReviewSubmit} className="review-form">
+          <div>{renderStars(rating)}</div>
+          <textarea
+            value={reviewText}
+            onChange={(e) => setReviewText(e.target.value)}
+            placeholder="Write your review"
+            required
+          />
+          <button type="submit" className="back-button">
+            Submit
           </button>
-          <button onClick={() => navigate("/register")} className="back-button">
-            Register
-          </button>
-        </div>
+        </form>
       )}
 
       <h3>Average Rating</h3>
-      <div className="stars">{renderStars(service.reviews.length ? service.reviews.reduce((acc, curr) => acc + curr.rating, 0) / service.reviews.length : 0)}</div>
+      <div className="stars">
+        {renderStars(
+          service.reviews.length
+            ? service.reviews.reduce((acc, curr) => acc + curr.rating, 0) /
+              service.reviews.length
+            : 0
+        )}
+      </div>
 
       <h3>Reviews</h3>
       {service.reviews.length === 0 ? (

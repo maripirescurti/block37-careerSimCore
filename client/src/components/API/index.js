@@ -1,6 +1,7 @@
+const API_URL = 'http://localhost:3000/api';
 
 export const fetchServices = async () => {
-  const response = await fetch('http://localhost:3000/api/services');
+  const response = await fetch(`${API_URL}/services`);
 
   if (response.ok) {
     const json = await response.json();
@@ -14,7 +15,7 @@ export const fetchServices = async () => {
 };
 
 export const fetchCategories = async () => {
-  const response = await fetch('http://localhost:3000/api/categories');
+  const response = await fetch(`${API_URL}/categories`);
 
   if (response.ok) {
     const json = await response.json();
@@ -28,7 +29,7 @@ export const fetchCategories = async () => {
 };
 
 export const fetchServiceById = async (id) => {
-  const response = await fetch(`http://localhost:3000/api/services/${id}`);
+  const response = await fetch(`${API_URL}/services/${id}`);
   if (!response.ok) {
     const errorJson = await response.json();
     console.error('Error fetching service:', errorJson);
@@ -38,7 +39,7 @@ export const fetchServiceById = async (id) => {
 };
 
 export const fetchFavorites = async (userId, token) => {
-  const response = await fetch(`http://localhost:3000/api/users/${userId}/favorites`, {
+  const response = await fetch(`${API_URL}/users/${userId}/favorites`, {
     headers: {
       'Authorization': `Bearer ${token}`,
     },
@@ -54,7 +55,7 @@ export const fetchFavorites = async (userId, token) => {
 };
 
 export const fetchReviewsByService = async (serviceId) => {
-  const response = await fetch(`http://localhost:3000/api/services/${serviceId}/reviews`);
+  const response = await fetch(`${API_URL}/services/${serviceId}/reviews`);
   if (response.ok) {
     const reviews = await response.json();
     return reviews;
@@ -66,7 +67,7 @@ export const fetchReviewsByService = async (serviceId) => {
 };
 
 export const addFavorite = async (userId, serviceId, token) => {
-  const response = await fetch(`http://localhost:3000/api/users/${userId}/favorites`, {
+  const response = await fetch(`${API_URL}/users/${userId}/favorites`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -85,7 +86,7 @@ export const addFavorite = async (userId, serviceId, token) => {
 };
 
 export const addReview = async (serviceId, userId, rating, reviewText, token) => {
-  const response = await fetch(`http://localhost:3000/api/users/${userId}/services/${serviceId}/reviews`, {
+  const response = await fetch(`${API_URL}/users/${userId}/services/${serviceId}/reviews`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -104,7 +105,7 @@ export const addReview = async (serviceId, userId, rating, reviewText, token) =>
 };
 
 export const updateReview = async (userId, serviceId, rating, reviewText, token) => {
-  const response = await fetch(`http://localhost:3000/api/users/${userId}/services/${serviceId}/reviews`, {
+  const response = await fetch(`${API_URL}/users/${userId}/services/${serviceId}/reviews`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -123,7 +124,7 @@ export const updateReview = async (userId, serviceId, rating, reviewText, token)
 };
 
 export const removeFavorite = async (userId, favoriteId, token) => {
-  const response = await fetch(`http://localhost:3000/api/users/${userId}/favorites/${favoriteId}`, {
+  const response = await fetch(`${API_URL}/users/${userId}/favorites/${favoriteId}`, {
     method: 'DELETE',
     headers: {
       'Authorization': `Bearer ${token}`,
