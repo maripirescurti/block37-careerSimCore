@@ -671,8 +671,10 @@ const init = async()=> {
       service_id: hamtaroFreud.id,
       rating: 5,
       review_text: 'I love their therapy methods. My hamaster is smarter'
-    }),
+    })
   ]);
+
+  
 
   // Add this after creating reviews in the init function
   const comments = await Promise.all([
@@ -700,7 +702,7 @@ const init = async()=> {
       review_id: review5.id, 
       user_id: celdy.id, 
       comment_text: 'My hamster has improved significantly!'
-    }),
+    })
   ]);
 
   console.log('Comments seeded:', comments);
