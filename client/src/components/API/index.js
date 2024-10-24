@@ -37,6 +37,22 @@ export const fetchServiceById = async (id) => {
   return response.json();
 };
 
+export const fetchFavorites = async (userId, token) => {
+  const response = await fetch(`http://localhost:3000/api/users/${userId}/favorites`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorJson = await response.json();
+    console.error('Error fetching favorites:', errorJson);
+    throw new Error(errorJson.message);
+  }
+
+  return response.json();
+};
+
 export const fetchReviewsByService = async (serviceId) => {
   const response = await fetch(`http://localhost:3000/api/services/${serviceId}/reviews`);
   if (response.ok) {
@@ -49,8 +65,8 @@ export const fetchReviewsByService = async (serviceId) => {
   }
 };
 
-export const addFavorite = async (serviceId, token) => {
-  const response = await fetch('http://localhost:3000/api/users/me/favorites', {
+export const addFavorite = async (userId, serviceId, token) => {
+  const response = await fetch(`http://localhost:3000/api/users/${userId}/favorites`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -68,8 +84,8 @@ export const addFavorite = async (serviceId, token) => {
   return response.json();
 };
 
-export const removeFavorite = async (serviceId, token) => {
-  const response = await fetch(`http://localhost:3000/api/users/me/favorites/${serviceId}`, {
+export const removeFavorite = async (userId, favoriteId, token) => {
+  const response = await fetch(`http://localhost:3000/api/users/${userId}/favorites/${favoriteId}`, {
     method: 'DELETE',
     headers: {
       'Authorization': `Bearer ${token}`,
