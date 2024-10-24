@@ -1,6 +1,4 @@
 /* SERVICES */
-
-
 .services-container {
   padding: 20px;
   text-align: center;
@@ -27,6 +25,13 @@
   padding: 10px;
   text-align: center;
   background-color: #f9f9f9;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.service-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .service-image {
@@ -36,19 +41,35 @@
   border-radius: 10px;
 }
 
+.rating {
+  display: flex;
+  justify-content: center;
+  margin: 5px 0;
+}
+
+.star {
+  font-size: 20px;
+  color: #ccc;
+  margin: 0 2px;
+}
+
+.star.filled {
+  color: gold;
+}
+
 .button-container {
   display: flex;
-  justify-content: space-around;
+  justify-content: center;
   margin-top: 10px;
 }
 
-.service-button, .favorite-button {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
+.heart-icon {
+  font-size: 24px;
+  color: #ccc;
   cursor: pointer;
+  transition: color 0.3s ease;
 }
 
-.favorite-button {
-  background-color: #ffcc00;
+.heart-icon.filled {
+  color: red;
 }

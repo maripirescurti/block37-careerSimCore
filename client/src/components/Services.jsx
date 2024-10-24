@@ -14,7 +14,7 @@ export default function Services({ token }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [favorites, setFavorites] = useState([]);
   const navigate = useNavigate();
-  const userId = token ? JSON.parse(atob(token.split('.')[1])).id : null; // Extract user ID from token
+  const userId = token ? JSON.parse(atob(token.split('.')[1])).id : null;
 
   useEffect(() => {
     const getServices = async () => {
@@ -29,7 +29,7 @@ export default function Services({ token }) {
                     reviews.reduce((acc, curr) => acc + curr.rating, 0) /
                     reviews.length
                   ).toFixed(1)
-                : "No ratings yet";
+                : 0;
             return { ...service, averageRating };
           })
         );
@@ -44,7 +44,7 @@ export default function Services({ token }) {
       if (userId && token) {
         try {
           const favorites = await fetchFavorites(userId, token);
-          setFavorites(favorites); // Store the full favorite objects
+          setFavorites(favorites);
         } catch (error) {
           console.error('Error fetching favorites', error);
         }
@@ -70,13 +70,10 @@ export default function Services({ token }) {
 
     try {
       const favorite = favorites.find((fav) => fav.service_id === serviceId);
-
       if (favorite) {
-        // If favorite exists, remove it
         await removeFavorite(userId, favorite.id, token);
         setFavorites(favorites.filter((fav) => fav.service_id !== serviceId));
       } else {
-        // If not a favorite, add it
         const newFavorite = await addFavorite(userId, serviceId, token);
         setFavorites([...favorites, newFavorite]);
       }
@@ -86,10 +83,22 @@ export default function Services({ token }) {
     }
   };
 
+  const renderStars = (rating) => {
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        <span key={i} className={i <= rating ? 'star filled' : 'star'}>
+          &#9733;
+        </span>
+      );
+    }
+    return stars;
+  };
+
   return (
     <div className="services-container">
       <h2>Your Pet is my Boss!!!</h2>
-      <p>Find your service here!</p>
+      <p>Find the best pet service here!</p>
       <input
         type="text"
         placeholder="Search services by category"
@@ -100,7 +109,11 @@ export default function Services({ token }) {
       <div className="services-grid">
         {filteredServices.length > 0 ? (
           filteredServices.map((service) => (
-            <div key={service.id} className="service-card">
+            <div
+              key={service.id}
+              className="service-card"
+              onClick={() => navigate(`/services/${service.id}`)}
+            >
               <img
                 src={service.image_url}
                 alt={service.name}
@@ -108,22 +121,17 @@ export default function Services({ token }) {
               />
               <h4>{service.name}</h4>
               <p>Category: {service.category_name}</p>
-              <p>Rating: {service.averageRating}</p>
+              <div className="rating">{renderStars(Math.round(service.averageRating))}</div>
               <div className="button-container">
-                <button
-                  onClick={() => navigate(`/services/${service.id}`)}
-                  className="service-button"
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleFavorite(service.id);
+                  }}
+                  className={`heart-icon ${isFavorite(service.id) ? 'filled' : ''}`}
                 >
-                  View Details
-                </button>
-                <button
-                  onClick={() => handleFavorite(service.id)}
-                  className="favorite-button"
-                >
-                  {isFavorite(service.id)
-                    ? "Remove from Favorites"
-                    : "Add to Favorites"}
-                </button>
+                  ♥
+                </div>
               </div>
             </div>
           ))
