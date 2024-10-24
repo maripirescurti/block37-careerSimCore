@@ -37,20 +37,50 @@ export const fetchServiceById = async (id) => {
   return response.json();
 };
 
+export const fetchReviewsByService = async (serviceId) => {
+  const response = await fetch(`http://localhost:3000/api/services/${serviceId}/reviews`);
+  if (response.ok) {
+    const reviews = await response.json();
+    return reviews;
+  } else {
+    const errorJson = await response.json();
+    console.error('Error fetching reviews:', errorJson);
+    throw new Error('Failed to fetch reviews');
+  }
+};
+
 export const addFavorite = async (serviceId, token) => {
-  const response = await fetch('http://localhost:3000/api/favorites', {
+  const response = await fetch('http://localhost:3000/api/users/me/favorites', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
-    body: JSON.stringify({ serviceId }),
+    body: JSON.stringify({ service_id: serviceId }),
   });
 
   if (!response.ok) {
     const errorJson = await response.json();
-    throw new Error(`Error adding favorite: ${errorJson.message}`);
+    console.error('Error adding favorite:', errorJson)
+    throw new Error(errorJson.message);
   }
 
   return response.json();
-}
+};
+
+export const removeFavorite = async (serviceId, token) => {
+  const response = await fetch(`http://localhost:3000/api/users/me/favorites/${serviceId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorJson = await response.json();
+    console.error('Error removing favorite:', errorJson);
+    throw new Error(errorJson.message);
+  }
+  
+  return response.json();
+};
