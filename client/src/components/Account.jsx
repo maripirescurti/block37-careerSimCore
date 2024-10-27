@@ -138,7 +138,7 @@ export default function Account({ token }) {
             </button>
 
             {updateFormVisible === pet.id && (
-              <form onSubmit={(e) => {
+              <form className="update-form" onSubmit={(e) => {
                 e.preventDefault();
                 handleUpdatePet(pet.id);
               }}>
@@ -161,32 +161,10 @@ export default function Account({ token }) {
         ))
       )}
 
-      {/* Update Pet Form */}
-      {updateFormVisible && (
-        <form onSubmit={(e) => {
-          e.preventDefault();
-          handleUpdatePet(updateFormVisible);
-        }}>
-          <input
-            type="number"
-            placeholder="Age"
-            value={updatedPetData.age || ''}
-            onChange={(e) => setUpdatedPetData({ ...updatedPetData, age: e.target.value })}
-          />
-          <input
-            type="number"
-            placeholder="Weight"
-            value={updatedPetData.weight || ''}
-            onChange={(e) => setUpdatedPetData({ ...updatedPetData, weight: e.target.value })}
-          />
-          <button type="submit">Submit Update</button>
-        </form>
-      )}
-
       {/* Add Pet Form */}
-      <button onClick={() => setPetFormVisible(!petFormVisible)}>Add Pet</button>
+      <button className="add-pet-button" onClick={() => setPetFormVisible(!petFormVisible)}>Add Pet</button>
       {petFormVisible && (
-        <form onSubmit={handleAddPet}>
+        <form className="pet-form" onSubmit={handleAddPet}>
           <input
             type="text"
             placeholder="Pet Name"
