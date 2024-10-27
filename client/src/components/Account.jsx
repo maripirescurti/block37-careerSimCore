@@ -7,7 +7,7 @@ import {
   fetchFavorites, 
   removeFavorite, 
   fetchServiceById,
-  fetchSpecies
+  fetchSpecies 
 } from "./API";
 import '../styles/Account.css';
 
@@ -20,6 +20,7 @@ export default function Account({ token }) {
   const [petFormVisible, setPetFormVisible] = useState(false);
   const [updateFormVisible, setUpdateFormVisible] = useState(null);
   const [newPet, setNewPet] = useState({ pet_name: "", species_id: "", breed: "", age: "", weight: "" });
+  const [updatedPetData, setUpdatedPetData] = useState({});
   const navigate = useNavigate();
   const userId = token ? JSON.parse(atob(token.split('.')[1])).id : null;
 
@@ -44,7 +45,6 @@ export default function Account({ token }) {
 
         setPets(petsWithSpeciesName);
         setSpeciesList(species);
-
 
         const favoriteDetails = await Promise.all(
           userFavorites.map(async (favorite) => {
@@ -80,11 +80,11 @@ export default function Account({ token }) {
     }
   };
 
-  const handleUpdatePet = async (petId, updatedData) => {
+  const handleUpdatePet = async (petId) => {
     try {
-      const updatedPet = await updatePet(userId, petId, updatedData, token);
+      const updatedPet = await updatePet(userId, petId, updatedPetData, token);
       setPets(pets.map(pet => (pet.id === petId ? updatedPet : pet)));
-      setUpdateFormVisible(null);
+      setUpdateFormVisible(null); // Close form after update
     } catch (error) {
       setError(error.message);
     }
@@ -118,6 +118,30 @@ export default function Account({ token }) {
             <p><strong>Breed:</strong> {pet.breed}</p>
             <p><strong>Age:</strong> {pet.age}</p>
             <p><strong>Weight:</strong> {pet.weight}</p>
+            <button onClick={() => setUpdateFormVisible(pet.id)}>
+              Update Pet
+            </button>
+
+            {updateFormVisible === pet.id && (
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                handleUpdatePet(pet.id);
+              }}>
+                <input
+                  type="number"
+                  placeholder="Age"
+                  value={updatedPetData.age || ''}
+                  onChange={(e) => setUpdatedPetData({ ...updatedPetData, age: e.target.value })}
+                />
+                <input
+                  type="number"
+                  placeholder="Weight"
+                  value={updatedPetData.weight || ''}
+                  onChange={(e) => setUpdatedPetData({ ...updatedPetData, weight: e.target.value })}
+                />
+                <button type="submit">Submit Update</button>
+              </form>
+            )}
           </div>
         ))
       )}
@@ -132,7 +156,6 @@ export default function Account({ token }) {
             value={newPet.pet_name}
             onChange={(e) => setNewPet({ ...newPet, pet_name: e.target.value })}
           />
-
           <select
             value={newPet.species_id}
             onChange={(e) => setNewPet({ ...newPet, species_id: e.target.value })}
@@ -144,7 +167,6 @@ export default function Account({ token }) {
               </option>
             ))}
           </select>
-
           <input
             type="text"
             placeholder="Breed"
