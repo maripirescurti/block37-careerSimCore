@@ -85,27 +85,19 @@ export const fetchSpecies = async () => {
 };
 
 export const fetchUserById = async (userId, token) => {
-  try {
-    const response = await fetch(`${API_URL}/users/${userId}`, {
-      headers: { 
-        'Authorization': `Bearer ${token}`, 
-        'Content-Type': 'application/json' 
-      },
-    });
+  const response = await fetch(`${API_URL}/users/${userId}`, {
+    headers: { 
+      Authorization: `Bearer ${token}`, 
+    },
+  });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Error fetching user:', errorData);
-      throw new Error(errorData.message || 'Failed to fetch user.');
-    }
-
-    const user = await response.json();
-    console.log('Fetched User Info:', user); // Check if data is correctly received
-    return user;
-  } catch (error) {
-    console.error('Fetch User Error:', error);
-    throw error;
+  if (!response.ok) {
+    const errorJson = await response.json();
+    console.error('Error fetching user:', errorJson);
+    throw new Error(errorJson.message || 'Failed to fetch user.');
   }
+
+  return response.json();
 };
 
 export const fetchServiceById = async (serviceId, token) => {

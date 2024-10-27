@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
+  fetchUserById, 
   fetchUserPets, 
   addPet, 
   updatePet, 
   fetchFavorites, 
   removeFavorite, 
-  fetchServiceById,
+  fetchServiceById, 
   fetchSpecies 
 } from "./API";
 import '../styles/Account.css';
@@ -29,14 +30,15 @@ export default function Account({ token }) {
 
     const loadData = async () => {
       try {
-        const [userPets, userFavorites, species] = await Promise.all([
+        const [user, userPets, userFavorites, species] = await Promise.all([
+          fetchUserById(userId, token),
           fetchUserPets(userId, token),
           fetchFavorites(userId, token),
           fetchSpecies()
         ]);
 
-        console.log('Fetched Pets:', userPets);  // Verify pets data
-        console.log('Fetched Species:', species); // Verify species data
+        console.log('Fetched User:', user); // Debug user info
+        setUserInfo(user);
 
         const petsWithSpeciesName = userPets.map(pet => {
           const speciesObj = species.find(s => s.id === pet.species_id);
@@ -107,6 +109,19 @@ export default function Account({ token }) {
     <div className="account-container">
       <h1>Your Pet is my Boss!</h1>
 
+      {/* User Info Section */}
+      {userInfo ? (
+        <div className="user-info">
+          <h2>User Information</h2>
+          <p><strong>Name:</strong> {userInfo.first_name} {userInfo.last_name}</p>
+          <p><strong>Username:</strong> {userInfo.username}</p>
+          <p><strong>Email:</strong> {userInfo.email}</p>
+        </div>
+      ) : (
+        <p>Loading user information...</p>
+      )}
+
+      {/* Pets Section */}
       <h2>Your Pets</h2>
       {pets.length === 0 ? (
         <p>You have no registered pets. Please add a pet!</p>
@@ -146,8 +161,30 @@ export default function Account({ token }) {
         ))
       )}
 
-      <button onClick={() => setPetFormVisible(!petFormVisible)}>Add Pet</button>
+      {/* Update Pet Form */}
+      {updateFormVisible && (
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          handleUpdatePet(updateFormVisible);
+        }}>
+          <input
+            type="number"
+            placeholder="Age"
+            value={updatedPetData.age || ''}
+            onChange={(e) => setUpdatedPetData({ ...updatedPetData, age: e.target.value })}
+          />
+          <input
+            type="number"
+            placeholder="Weight"
+            value={updatedPetData.weight || ''}
+            onChange={(e) => setUpdatedPetData({ ...updatedPetData, weight: e.target.value })}
+          />
+          <button type="submit">Submit Update</button>
+        </form>
+      )}
 
+      {/* Add Pet Form */}
+      <button onClick={() => setPetFormVisible(!petFormVisible)}>Add Pet</button>
       {petFormVisible && (
         <form onSubmit={handleAddPet}>
           <input
@@ -189,6 +226,7 @@ export default function Account({ token }) {
         </form>
       )}
 
+      {/* Favorites Section */}
       <h2>Favorite Services</h2>
       {favorites.length === 0 ? (
         <p>No favorite services.</p>

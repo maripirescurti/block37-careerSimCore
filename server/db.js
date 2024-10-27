@@ -220,24 +220,26 @@ const fetchUsers = async() => {
 
 const fetchSingleUser = async (id) => {
   try {
-    console.log('Fetching user with ID:', id); // Log the ID
+    console.log('Fetching user with ID:', id); // Log the input
+
     const SQL = `
       SELECT *
       FROM users
       WHERE id = $1;
     `;
+
     const response = await client.query(SQL, [id]);
-    console.log('Database response:', response.rows); // Log the response
+    console.log('Database response:', response.rows); // Log the query result
 
     if (response.rows.length === 0) {
-      console.warn('User not found'); // Warn if user not found
-      return null; // Return null instead of throwing
+      console.warn(`User with ID ${id} not found`); // More detailed logging
+      return null;
     }
 
-    return response.rows[0]; // Return the user object
+    return response.rows[0]; // Return the first user object
   } catch (error) {
-    console.error('Error fetching user:', error);
-    throw new Error('Internal Server Error');
+    console.error('Database query error:', error); // Log the exact error
+    throw new Error('Internal Server Error'); // Re-throw as a 500 error
   }
 };
 

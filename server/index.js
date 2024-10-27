@@ -35,10 +35,16 @@ const {
  } = require('./db');
 
  const express = require('express');
- const cors = require('cors');
  const app = express();
  app.use(express.json());
- app.use(cors());
+
+//  const cors = require('cors');
+//  const corsOptions = {
+//   origin: 'https://block37-careersimcore.onrender.com/api',
+//   methods: 'GET,POST,PUT,DELETE,OPTIONS',
+//   allowedHeaders: 'Content-Type,Authorization',
+//  };
+//  app.use(cors(corsOptions));
 
  // for deployment 
  const path = require('path');
@@ -105,10 +111,13 @@ app.get('/api/users', async(req, res, next) => {
 });
 
 app.get('/api/users/:id', async (req, res) => {
-  const { id } = req.params;
+  const userId = req.params.id;
+  console.log('Fetching user with ID:', userId); // Debugging
+
   try {
-    const user = await fetchSingleUser(id);
+    const user = await fetchSingleUser(userId);
     if (!user) {
+      console.warn(`User with ID ${userId} not found`); // Better warning log
       return res.status(404).json({ message: 'User not found' });
     }
     res.json(user);
