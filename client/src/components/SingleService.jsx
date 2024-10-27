@@ -156,16 +156,38 @@ export default function SingleService({ token }) {
   return (
     <div className="single-service-container">
       <h2>{service.name}</h2>
-
+  
       <div className="favorite-heart" onClick={handleFavoriteToggle}>
-        <span className={`heart ${favorites.some(fav => fav.service_id === serviceId) ? "filled-heart" : ""}`}>♥</span>
+        <span
+          className={`heart ${favorites.some((fav) => fav.service_id === serviceId) ? "filled-heart" : ""}`}
+        >
+          ♥
+        </span>
       </div>
-
+  
       <img src={service.image_url} alt={service.name} className="single-service-image" />
       <p><strong>Service:</strong> {service.category_name}</p>
       <p><strong>Animal Specialty:</strong> {service.species_name}</p>
       <p>{service.description}</p>
-
+  
+      <h3>Reviews</h3>
+      {service.reviews.length === 0 ? (
+        <p>No reviews yet.</p>
+      ) : (
+        service.reviews.map((review) => (
+          <div key={review.id} className="review">
+            <p><strong>User:</strong> {review.reviewer_username}</p> {/* Display username */}
+            <p><strong>Rating:</strong> {renderStars(review.rating)}</p>
+            <p>{review.review_text}</p>
+          </div>
+        ))
+      )}
+  
+      <button className="back-button" onClick={() => navigate("/")}>
+        Back to Home Page
+      </button>
+  
+      {/* Add/Edit/Delete Review Buttons and Forms */}
       {userReview ? (
         <>
           <button onClick={() => setIsEditFormVisible(!isEditFormVisible)} className="back-button">
@@ -180,7 +202,7 @@ export default function SingleService({ token }) {
           Add Review
         </button>
       )}
-
+  
       {isAddFormVisible && (
         <form onSubmit={handleAddReviewSubmit} className="review-form">
           <div>{renderStars(rating)}</div>
@@ -193,7 +215,7 @@ export default function SingleService({ token }) {
           <button type="submit" className="back-button">Submit</button>
         </form>
       )}
-
+  
       {isEditFormVisible && (
         <form onSubmit={handleEditReviewSubmit} className="review-form">
           <div>{renderStars(rating)}</div>
@@ -206,22 +228,6 @@ export default function SingleService({ token }) {
           <button type="submit" className="back-button">Update</button>
         </form>
       )}
-
-      <h3>Reviews</h3>
-      {service.reviews.length === 0 ? (
-        <p>No reviews yet.</p>
-      ) : (
-        service.reviews.map((review) => (
-          <div key={review.id} className="review">
-            <p><strong>Rating:</strong> {renderStars(review.rating)}</p>
-            <p>{review.review_text}</p>
-          </div>
-        ))
-      )}
-
-      <button className="back-button" onClick={() => navigate("/")}>
-        Back to Home Page
-      </button>
     </div>
   );
 }

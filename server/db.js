@@ -278,15 +278,12 @@ const fetchSingleService = async (id) => {
            species.type_name AS species_name,
            reviews.id AS review_id,
            reviews.rating,
-           reviews.review_text,
-           reviews.user_id,
-           users.username AS reviewer_username -- Add username here
+           reviews.review_text
     FROM services
     LEFT JOIN categories ON services.category_id = categories.id
     LEFT JOIN species ON services.species_id = species.id
     LEFT JOIN reviews ON services.id = reviews.service_id
-    LEFT JOIN users ON reviews.user_id = users.id -- Join with users to get username
-    WHERE services.id = $1;
+    WHERE services.id = $1
   `;
   const response = await client.query(SQL, [id]);
 
@@ -295,14 +292,12 @@ const fetchSingleService = async (id) => {
     reviews: [],
   };
 
-  response.rows.forEach((row) => {
+  response.rows.forEach(row => {
     if (row.review_id) {
       service.reviews.push({
         id: row.review_id,
         rating: row.rating,
         review_text: row.review_text,
-        user_id: row.user_id,
-        reviewer_username: row.reviewer_username, // Include the username
       });
     }
   });
