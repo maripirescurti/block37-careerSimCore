@@ -105,13 +105,13 @@ app.get('/api/users', async(req, res, next) => {
 });
 
 app.get('/api/users/:id', async (req, res) => {
-  const userId = req.params.id;
+  const { id } = req.params;
   try {
-    const user = await fetchSingleUser(userId);
+    const user = await fetchSingleUser(id);
     if (!user) {
-      return res.status(404).json({ message: 'User not found' }); // Fixed message
+      return res.status(404).json({ message: 'User not found' });
     }
-    res.status(200).json(user);
+    res.json(user);
   } catch (error) {
     console.error('Error fetching user:', error);
     res.status(500).json({ message: 'Internal Server Error' });
@@ -181,15 +181,12 @@ app.get('/api/services/:serviceId/reviews/:reviewId/comments', async(req, res, n
   }
 });
 
-app.get('/api/users/:id/pets', isLoggedIn, async(req, res, next) => {
+app.get('/api/users/:id/pets', isLoggedIn, async (req, res, next) => {
   try {
-    if(req.params.id !== req.user.id){
-      const error = Error('not authorized');
-      error.status = 401;
-      throw error;
-    }
-    res.send(await fetchPets(req.params.id));
-  } catch(ex) {
+    const pets = await fetchPets(req.params.id);
+    console.log('API Response Pets:', pets); // Log output to ensure species_name is present
+    res.send(pets);
+  } catch (ex) {
     next(ex);
   }
 });

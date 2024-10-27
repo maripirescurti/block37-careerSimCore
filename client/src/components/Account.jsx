@@ -34,8 +34,17 @@ export default function Account({ token }) {
           fetchSpecies()
         ]);
 
-        setPets(userPets);
+        console.log('Fetched Pets:', userPets);  // Verify pets data
+        console.log('Fetched Species:', species); // Verify species data
+
+        const petsWithSpeciesName = userPets.map(pet => {
+          const speciesObj = species.find(s => s.id === pet.species_id);
+          return { ...pet, species_name: speciesObj ? speciesObj.type_name : 'Unknown' };
+        });
+
+        setPets(petsWithSpeciesName);
         setSpeciesList(species);
+
 
         const favoriteDetails = await Promise.all(
           userFavorites.map(async (favorite) => {
@@ -105,7 +114,7 @@ export default function Account({ token }) {
         pets.map((pet) => (
           <div key={pet.id} className="pet-card">
             <p><strong>Name:</strong> {pet.pet_name}</p>
-            <p><strong>Species:</strong> {pet.species_name}</p>
+            <p><strong>Species:</strong> {pet.species_name || 'Not Available'}</p>
             <p><strong>Breed:</strong> {pet.breed}</p>
             <p><strong>Age:</strong> {pet.age}</p>
             <p><strong>Weight:</strong> {pet.weight}</p>

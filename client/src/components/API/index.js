@@ -85,18 +85,27 @@ export const fetchSpecies = async () => {
 };
 
 export const fetchUserById = async (userId, token) => {
-  const response = await fetch(`${API_URL}/users/${userId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  try {
+    const response = await fetch(`${API_URL}/users/${userId}`, {
+      headers: { 
+        'Authorization': `Bearer ${token}`, 
+        'Content-Type': 'application/json' 
+      },
+    });
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || 'Failed to fetch user.');
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Error fetching user:', errorData);
+      throw new Error(errorData.message || 'Failed to fetch user.');
+    }
+
+    const user = await response.json();
+    console.log('Fetched User Info:', user); // Check if data is correctly received
+    return user;
+  } catch (error) {
+    console.error('Fetch User Error:', error);
+    throw error;
   }
-
-  return response.json();
 };
 
 export const fetchServiceById = async (serviceId, token) => {
@@ -133,17 +142,17 @@ export const fetchFavorites = async (userId, token) => {
 
 export const fetchUserPets = async (userId, token) => {
   const response = await fetch(`${API_URL}/users/${userId}/pets`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { Authorization: `Bearer ${token}` },
   });
 
+  const pets = await response.json();
+  console.log('Fetched Pets:', pets); // Log the response to check data integrity
+
   if (!response.ok) {
-    const errorJson = await response.json();
-    console.error('Error fetching pets:', errorJson);
-    throw new Error(errorJson.message);
+    console.error('Error fetching pets:', pets);
+    throw new Error(pets.message);
   }
-  return response.json();
+  return pets;
 };
 
 

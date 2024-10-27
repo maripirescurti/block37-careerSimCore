@@ -155,12 +155,14 @@ const createService = async({ name, category_id, species_id, description, image_
 };
 
 const createPet = async({ user_id, pet_name, species_id, breed, age, weight }) => {
+  console.log('Creating Pet:', { user_id, pet_name, species_id, breed, age, weight }); // Log input
   const SQL = `
     INSERT INTO pets(id, user_id, pet_name, species_id, breed, age, weight)
     VALUES($1, $2, $3, $4, $5, $6, $7)
-    RETURNING *
+    RETURNING *;
   `;
   const response = await client.query(SQL, [uuid.v4(), user_id, pet_name, species_id, breed, age, weight]);
+  console.log('Inserted Pet:', response.rows[0]); // Log the inserted row
   return response.rows[0];
 };
 
@@ -300,15 +302,17 @@ const fetchSingleService = async (id) => {
   return service;
 };
 
-const fetchPets = async(user_id) => {
+const fetchPets = async (user_id) => {
   const SQL = `
-    SELECT * 
+    SELECT pets.*, species.type_name AS species_name
     FROM pets
-    WHERE user_id = $1
+    JOIN species ON pets.species_id = species.id
+    WHERE pets.user_id = $1;
   `;
   const response = await client.query(SQL, [user_id]);
+  console.log('Database Pets Response:', response.rows); // Log to confirm species_name
   return response.rows;
-}
+};
 
 const fetchFavorites = async(user_id) => {
   const SQL = `
