@@ -5,8 +5,10 @@ import {
   addPet, 
   updatePet, 
   fetchFavorites, 
-  removeFavorite 
+  removeFavorite, 
+  fetchServiceById 
 } from "./API";
+import '../styles/Account.css';
 
 export default function Account({ token }) {
   const [userInfo, setUserInfo] = useState(null);
@@ -14,7 +16,7 @@ export default function Account({ token }) {
   const [favorites, setFavorites] = useState([]);
   const [error, setError] = useState(null);
   const [petFormVisible, setPetFormVisible] = useState(false);
-  const [updateFormVisible, setUpdateFormVisible] = useState(null); // Track which pet is being updated
+  const [updateFormVisible, setUpdateFormVisible] = useState(null);
   const [newPet, setNewPet] = useState({ pet_name: "", species_id: "", breed: "", age: "", weight: "" });
   const navigate = useNavigate();
   const userId = token ? JSON.parse(atob(token.split('.')[1])).id : null;
@@ -28,9 +30,22 @@ export default function Account({ token }) {
         setPets(userPets);
 
         const userFavorites = await fetchFavorites(userId, token);
-        setFavorites(userFavorites);
-      } catch (error) {
-        setError(error.message);
+        const favoriteDetails = await Promise.all(
+          userFavorites.map(async (favorite) => {
+            try {
+              const service = await fetchServiceById(favorite.service_id, token);
+              return { ...favorite, service };
+            } catch (err) {
+              console.error('Failed to fetch service:', err);
+              return { ...favorite, service: null };
+            }
+          })
+        );
+
+        setFavorites(favoriteDetails);
+      } catch (err) {
+        console.error('Error loading data:', err);
+        setError(err.message);
       }
     };
 
@@ -53,7 +68,7 @@ export default function Account({ token }) {
     try {
       const updatedPet = await updatePet(userId, petId, updatedData, token);
       setPets(pets.map(pet => (pet.id === petId ? updatedPet : pet)));
-      setUpdateFormVisible(null); // Close the form after update
+      setUpdateFormVisible(null);
     } catch (error) {
       setError(error.message);
     }
@@ -75,16 +90,6 @@ export default function Account({ token }) {
   return (
     <div className="account-container">
       <h1>Your Pet is my Boss!</h1>
-      <h2>Account Information</h2>
-
-      {userInfo && (
-        <div>
-          <p><strong>First Name:</strong> {userInfo.first_name}</p>
-          <p><strong>Last Name:</strong> {userInfo.last_name}</p>
-          <p><strong>Username:</strong> {userInfo.username}</p>
-          <p><strong>Email:</strong> {userInfo.email}</p>
-        </div>
-      )}
 
       <h2>Your Pets</h2>
       {pets.length === 0 ? (
@@ -157,11 +162,31 @@ export default function Account({ token }) {
         <p>No favorite services.</p>
       ) : (
         favorites.map((fav) => (
-          <div key={fav.id} className="favorite-card">
-            <img src={fav.image_url} alt={fav.name} />
-            <p>{fav.name}</p>
-            <button onClick={() => navigate(`/services/${fav.service_id}`)}>View Details</button>
-            <button onClick={() => handleRemoveFavorite(fav.id)}>Remove from Favorites</button>
+          <div 
+            key={fav.id} 
+            className="favorite-card" 
+            onClick={() => navigate(`/services/${fav.service_id}`)}
+          >
+            {fav.service ? (
+              <>
+                <img 
+                  src={fav.service.image_url} 
+                  alt={fav.service.name} 
+                  onError={(e) => (e.target.src = '/fallback-image.jpg')}
+                />
+                <div className="favorite-card-info">
+                  <p>{fav.service.name}</p>
+                </div>
+              </>
+            ) : (
+              <p>Loading service details...</p>
+            )}
+            <button onClick={(e) => {
+              e.stopPropagation(); 
+              handleRemoveFavorite(fav.id);
+            }}>
+              Remove from Favorites
+            </button>
           </div>
         ))
       )}

@@ -1,0 +1,90 @@
+.account-container {
+  max-width: 800px;
+  margin: auto;
+  padding: 20px;
+}
+
+.pets-grid, .favorites-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.pet-card, .favorite-card {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 15px;
+  background-color: #f8f8f8;
+  text-align: center;
+}
+
+.favorite-image {
+  max-width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  margin-top: 10px;
+  margin: auto;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
+.favorite-card {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  padding: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.favorite-card:hover {
+  background-color: #f1f1f1;
+}
+
+.favorite-card img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-right: 15px;
+}
+
+.favorite-card-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.favorite-card-info p {
+  margin: 0;
+  font-weight: bold;
+}
+
+.favorite-card button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.favorite-card-info button:hover {
+  background-color: #45a049;
+}

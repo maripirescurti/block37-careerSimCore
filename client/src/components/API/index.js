@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'https://block37-careersimcore.onrender.com/api';
 
 export const loginUser = async (username, password) => {
   const response = await fetch(`${API_URL}/auth/login`, {
@@ -44,6 +44,7 @@ export const registerUser = async (first_name, last_name, username, email, passw
   return result;
 };
 
+
 export const fetchServices = async () => {
   const response = await fetch(`${API_URL}/services`);
 
@@ -72,13 +73,34 @@ export const fetchCategories = async () => {
   }
 };
 
-export const fetchServiceById = async (id) => {
-  const response = await fetch(`${API_URL}/services/${id}`);
+export const fetchUserById = async (userId, token) => {
+  const response = await fetch(`${API_URL}/users/${userId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || 'Failed to fetch user.');
+  }
+
+  return response.json();
+};
+
+export const fetchServiceById = async (serviceId, token) => {
+  const response = await fetch(`${API_URL}/services/${serviceId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
   if (!response.ok) {
     const errorJson = await response.json();
     console.error('Error fetching service:', errorJson);
-    throw new Error(`Error fetching service: ${errorJson.message || 'Service not found'}`);
+    throw new Error(errorJson.message || 'Failed to fetch service.');
   }
+
   return response.json();
 };
 
@@ -248,7 +270,24 @@ export const updateReview = async (userId, serviceId, rating, reviewText, token)
   if (!response.ok) {
     const errorJson = await response.json();
     console.error('Error updating review:', errorJson);
-    throw new Error(errorJson.message);
+    throw new Error(errorJson.message || 'Failed to update review');
+  }
+
+  return await response.json();
+};
+
+export const deleteReview = async (userId, serviceId, reviewId, token) => {
+  const response = await fetch(`${API_URL}/users/${userId}/services/${serviceId}/reviews/${reviewId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorJson = await response.json();
+    console.error("Error deleting review:", errorJson);
+    throw new Error(errorJson.message || "Failed to delete review.");
   }
 
   return response.json();

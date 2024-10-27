@@ -97,7 +97,7 @@ export default function Services({ token }) {
 
   return (
     <div className="services-container">
-      <h2>Your Pet is my Boss!!!</h2>
+      <h2 className="services-title">Your Pet is My Boss!!!</h2>
       <p>Find the best pet service here!</p>
       <input
         type="text"
@@ -121,14 +121,18 @@ export default function Services({ token }) {
               />
               <h4>{service.name}</h4>
               <p>Category: {service.category_name}</p>
-              <div className="rating">{renderStars(Math.round(service.averageRating))}</div>
+              <div className="rating">
+                {renderStars(Math.round(service.averageRating))}
+              </div>
               <div className="button-container">
                 <div
                   onClick={(e) => {
                     e.stopPropagation();
                     handleFavorite(service.id);
                   }}
-                  className={`heart-icon ${isFavorite(service.id) ? 'filled' : ''}`}
+                  className={`heart-icon ${
+                    isFavorite(service.id) ? 'filled' : ''
+                  }`}
                 >
                   ♥
                 </div>

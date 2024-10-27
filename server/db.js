@@ -216,6 +216,29 @@ const fetchUsers = async() => {
   return response.rows;
 }
 
+const fetchSingleUser = async (id) => {
+  try {
+    console.log('Fetching user with ID:', id); // Log the ID
+    const SQL = `
+      SELECT *
+      FROM users
+      WHERE id = $1;
+    `;
+    const response = await client.query(SQL, [id]);
+    console.log('Database response:', response.rows); // Log the response
+
+    if (response.rows.length === 0) {
+      console.warn('User not found'); // Warn if user not found
+      return null; // Return null instead of throwing
+    }
+
+    return response.rows[0]; // Return the user object
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    throw new Error('Internal Server Error');
+  }
+};
+
 const fetchCategories = async() => {
   const SQL = `
     SELECT * 
@@ -544,6 +567,7 @@ module.exports = {
   createReview,
   createComment,
   fetchUsers,
+  fetchSingleUser,
   fetchCategories,
   fetchSpecies,
   fetchServices,

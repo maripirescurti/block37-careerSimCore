@@ -12,6 +12,7 @@ const {
   createReview,
   createComment,
   fetchUsers,
+  fetchSingleUser,
   fetchCategories,
   fetchSpecies,
   fetchServices,
@@ -100,6 +101,20 @@ app.get('/api/users', async(req, res, next) => {
     res.send(await fetchUsers());
   } catch(ex) {
     next(ex);
+  }
+});
+
+app.get('/api/users/:id', async (req, res) => {
+  const userId = req.params.id;
+  try {
+    const user = await fetchSingleUser(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' }); // Fixed message
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
@@ -373,23 +388,26 @@ app.put('/api/appointments/:appointmentId', isLoggedIn, async (req, res, next) =
 
 app.put('/api/users/:userId/services/:serviceId/reviews', isLoggedIn, async (req, res, next) => {
   const { rating, review_text } = req.body;
-  const user_id = req.user.id;
-  const service_id = req.params.serviceId;
+  const { userId, serviceId } = req.params;
 
   try {
+    if (String(req.user.id) !== userId) {
+      return res.status(401).send('Not authorized');
+    }
+
     const updatedReview = await updateReview({
-      user_id,
-      service_id,
+      user_id: userId,
+      service_id: serviceId,
       rating,
       review_text,
     });
+
     res.status(200).json(updatedReview);
   } catch (error) {
     if (error.message === 'Review not found') {
       return res.status(404).json({ message: 'Review not found' });
     }
-    console.error(error); 
-    res.status(500).json({ message: 'Internal server error' });
+    next(error);
   }
 });
 
@@ -493,11 +511,11 @@ const init = async()=> {
   console.log('tables created');
   // seeding data
   const [mari, ozan, luis, celdy, gui, groomer, walker, petsitter, vet, therapist, dog, cat, rabbit, hamster, lizard] = await Promise.all([
-    createUser({ first_name: 'Mari', last_name: 'Curti', username: 'maricurti', email: 'mariana.pcurti@gmail.com', password: 'shh2!'}),
-    createUser({ first_name: 'Ozan', last_name: 'Cicek', username: 'ozancicek94', email: 'ozancicek94@gmail.com', password: 'shh2!'}),
-    createUser({ first_name: 'Luis', last_name: 'Curti', username: 'luisao67', email: 'luis_curti@gmail.com', password: 'shh2!'}),
-    createUser({ first_name: 'Celdy', last_name: 'Pires', username: 'mcdivertida68', email: 'celdy@gmail.com', password: 'shh2!'}),
-    createUser({ first_name: 'Gui', last_name: 'Curti', username: 'guiguigui', email: 'guicurti@gmail.com', password: 'shh2!'}),
+    createUser({ first_name: 'Mari', last_name: 'Curti', username: 'maricurti', email: 'mari@example.com', password: 'shh2!'}),
+    createUser({ first_name: 'Ozan', last_name: 'Cicek', username: 'ozancc', email: 'ozan@example.com', password: 'shh2!'}),
+    createUser({ first_name: 'Luis', last_name: 'Curti', username: 'lulu', email: 'luis@example.com', password: 'shh2!'}),
+    createUser({ first_name: 'Celdy', last_name: 'Pires', username: 'mcdivertida', email: 'celdy@example.com', password: 'shh2!'}),
+    createUser({ first_name: 'Gui', last_name: 'Curti', username: 'guiguigui', email: 'gui@example.com', password: 'shh2!'}),
 
     createCategory({ category_name: 'Groomer'}),
     createCategory({ category_name: 'Walker'}),

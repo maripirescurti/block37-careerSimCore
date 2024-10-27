@@ -1,21 +1,40 @@
+/* Import Google Font */
+@import url('https://fonts.googleapis.com/css2?family=Chewy&display=swap');
+
 /* Navbar Container */
 .navbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: #4bc7f4;
+  background-color: #8edafd; /* Warm orange background */
   padding: 15px 20px;
-  position: fixed; /* Make it fixed at the top */
-  top: 0; /* Align it at the very top */
+  position: fixed;
+  top: 0;
   left: 0;
-  width: 100%; /* Ensure it spans the entire width */
-  z-index: 100; /* Keep it above other elements */
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  z-index: 100;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* Prevent content from being hidden behind the navbar */
 body {
-  padding-top: 60px; /* Adjust this to match the navbar height */
+  margin: 0;
+  padding-top: 70px;
+  box-sizing: border-box;
+}
+
+/* Navbar Title */
+.navbar-title {
+  font-family: 'Chewy', cursive;
+  font-size: 28px;
+  color: #4a4e69;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.3s ease-in-out;
+}
+
+.navbar-title:hover {
+  color: #22223b;
 }
 
 /* Hamburger Icon */
@@ -25,15 +44,15 @@ body {
   justify-content: space-between;
   height: 19px;
   cursor: pointer;
-  z-index: 20;
-  margin-right: 50px;
+  z-index: 200; /* Ensure it's on top */
+  margin-right: 50px; /* Adjust margin for alignment */
 }
 
 /* Hamburger Bars */
 .bar {
-  width: 28px;
+  width: 25px;
   height: 3px;
-  background-color: #000000;
+  background-color: #4a4e69;
   transition: all 0.3s ease-in-out;
   border-radius: 3px;
 }
@@ -53,34 +72,57 @@ body {
 .navbar-links {
   list-style: none;
   position: absolute;
-  top: 60px; /* Adjust to align below the navbar */
-  right: 10px;
-  background-color: #4bc7f4;
+  top: 70px;
+  right: 30px;
+  background-color: #f2e9e4;
   flex-direction: column;
-  padding: 10px 15px;
+  padding: 10px;
   border-radius: 8px;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
   display: none;
+  min-width: 100px;
+  overflow: hidden;
+  z-index: 150;
 }
 
 /* Show the menu when active */
 .navbar-links.active {
   display: flex;
+  right: 15px; /* Align with the hamburger */
 }
 
 /* Menu Items */
-.navbar-links a, .logout-button {
+.navbar-links a,
+.logout-button {
   text-decoration: none;
-  color: #333;
-  font-size: 18px;
+  color: #4a4e69;
+  font-family: 'Chewy', cursive;
+  font-size: 20px;
   margin: 8px 0;
-  padding: 5px;
-  transition: color 0.3s ease-in-out;
-  background: none;
-  border: none;
-  cursor: pointer;
+  padding: 8px;
+  transition: color 0.3s ease-in-out, background-color 0.3s ease-in-out;
+  border-radius: 6px;
+  text-align: center;
 }
 
-.navbar-links a:hover, .logout-button:hover {
-  color: #ff6347;
+/* Hover Effect */
+.navbar-links a:hover,
+.logout-button:hover {
+  color: #fff;
+  background-color: #22223b;
+}
+
+/* Media Query for Mobile Adjustments */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 10px;
+  }
+
+  .navbar-title {
+    font-size: 24px;
+  }
+
+  .navbar-links {
+    right: 10px; /* Align closer to the screen edge */
+  }
 }

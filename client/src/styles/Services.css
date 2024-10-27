@@ -1,7 +1,19 @@
+/* Import Google Font */
+@import url('https://fonts.googleapis.com/css2?family=Chewy&display=swap');
+
+
 /* SERVICES */
 .services-container {
   padding: 20px;
   text-align: center;
+}
+
+.services-title {
+  font-family: 'Chewy', cursive;
+  font-size: 36px;
+  color: black; /* Matches the Navbar color */
+  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Adds a subtle shadow */
+  margin-bottom: 10px;
 }
 
 .search-bar {

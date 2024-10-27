@@ -17,15 +17,10 @@ export default function App() {
     setIsLoggedIn(!!token);
   }, [token]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    setToken(null);
-    setEmail('');
-  };
   return (
     <>
     <BrowserRouter>
-      <NavBar token={token} handleLogout={handleLogout} />
+      <NavBar token={token} setToken={setToken} />
       <Routes>
         <Route path='/' element={<Services token={token} isLoggedIn={isLoggedIn} />} />
         <Route path='/services/:id' element={<SingleService token={token} isLoggedIn={isLoggedIn} />} />

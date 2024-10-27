@@ -90,3 +90,23 @@ textarea {
   border-radius: 5px;
   border: 1px solid #ccc;
 }
+
+.average-rating {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 10px 0;
+  /* border: #ffbf47 solid;
+  border-radius: 5px; */
+}
+
+.average-rating p {
+  margin: 0;
+  font-size: 18px;
+  color: #ffbf47;
+}
+
+.average-rating span {
+  font-size: 20px;
+}
