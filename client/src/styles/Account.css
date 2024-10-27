@@ -85,6 +85,6 @@ button:hover {
   transition: background-color 0.2s;
 }
 
-.favorite-card-info button:hover {
+.favorite-card button:hover {
   background-color: #45a049;
 }

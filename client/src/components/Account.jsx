@@ -6,7 +6,8 @@ import {
   updatePet, 
   fetchFavorites, 
   removeFavorite, 
-  fetchServiceById 
+  fetchServiceById,
+  fetchSpecies
 } from "./API";
 import '../styles/Account.css';
 
@@ -14,6 +15,7 @@ export default function Account({ token }) {
   const [userInfo, setUserInfo] = useState(null);
   const [pets, setPets] = useState([]);
   const [favorites, setFavorites] = useState([]);
+  const [speciesList, setSpeciesList] = useState([]);
   const [error, setError] = useState(null);
   const [petFormVisible, setPetFormVisible] = useState(false);
   const [updateFormVisible, setUpdateFormVisible] = useState(null);
@@ -26,10 +28,15 @@ export default function Account({ token }) {
 
     const loadData = async () => {
       try {
-        const userPets = await fetchUserPets(userId, token);
-        setPets(userPets);
+        const [userPets, userFavorites, species] = await Promise.all([
+          fetchUserPets(userId, token),
+          fetchFavorites(userId, token),
+          fetchSpecies()
+        ]);
 
-        const userFavorites = await fetchFavorites(userId, token);
+        setPets(userPets);
+        setSpeciesList(species);
+
         const favoriteDetails = await Promise.all(
           userFavorites.map(async (favorite) => {
             try {
@@ -102,19 +109,6 @@ export default function Account({ token }) {
             <p><strong>Breed:</strong> {pet.breed}</p>
             <p><strong>Age:</strong> {pet.age}</p>
             <p><strong>Weight:</strong> {pet.weight}</p>
-            <button onClick={() => setUpdateFormVisible(pet.id)}>Update Pet Info</button>
-
-            {updateFormVisible === pet.id && (
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                const { age, weight } = e.target.elements;
-                handleUpdatePet(pet.id, { age: age.value, weight: weight.value });
-              }}>
-                <input type="number" name="age" placeholder="Age" />
-                <input type="number" name="weight" placeholder="Weight" />
-                <button type="submit">Submit</button>
-              </form>
-            )}
           </div>
         ))
       )}
@@ -129,12 +123,19 @@ export default function Account({ token }) {
             value={newPet.pet_name}
             onChange={(e) => setNewPet({ ...newPet, pet_name: e.target.value })}
           />
-          <input
-            type="text"
-            placeholder="Species ID"
+
+          <select
             value={newPet.species_id}
             onChange={(e) => setNewPet({ ...newPet, species_id: e.target.value })}
-          />
+          >
+            <option value="">Select Species</option>
+            {speciesList.map((species) => (
+              <option key={species.id} value={species.id}>
+                {species.type_name}
+              </option>
+            ))}
+          </select>
+
           <input
             type="text"
             placeholder="Breed"

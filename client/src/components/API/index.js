@@ -73,6 +73,17 @@ export const fetchCategories = async () => {
   }
 };
 
+export const fetchSpecies = async () => {
+  const response = await fetch(`${API_URL}/species`);
+  
+  if (!response.ok) {
+    const errorJson = await response.json();
+    throw new Error(errorJson.message || 'Failed to fetch species.');
+  }
+
+  return response.json();
+};
+
 export const fetchUserById = async (userId, token) => {
   const response = await fetch(`${API_URL}/users/${userId}`, {
     headers: {
