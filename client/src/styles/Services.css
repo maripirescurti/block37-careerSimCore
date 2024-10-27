@@ -11,7 +11,7 @@
 .services-title {
   font-family: 'Chewy', cursive;
   font-size: 36px;
-  color: black; /* Matches the Navbar color */
+  color: black; 
   text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Adds a subtle shadow */
   margin-bottom: 10px;
 }
