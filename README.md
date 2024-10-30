@@ -6,4 +6,4 @@ GitHub Project Board:
 https://github.com/users/maripirescurti/projects/5/views/1
 
 Deployed Site:
-https://luminous-queijadas-9cd15b.netlify.app/
+https://cerulean-bunny-59ff94.netlify.app/
